@@ -1,0 +1,8 @@
+# grades — master record of every crude grade that has ever appeared in the JCC basket.
+# Loaded by `python -m ingest.seed` into the `grades` table at Milestone 2.
+# Schema: see BUILD_SPEC.md §5 (grades table).
+
+# M1 placeholder — populated at Milestone 2 with ~10 majors:
+#   murban, das, upper_zakum, arab_extra_light, arab_light, arab_medium,
+#   arab_heavy, oman, dubai, espo, wti.
+grades: []

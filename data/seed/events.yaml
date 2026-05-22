@@ -1,0 +1,20 @@
+# events — curated geopolitical / market events used for annotation on /composition and /grades.
+# Loaded by `python -m ingest.seed` into the `events` table at Milestone 2.
+# Schema: see BUILD_SPEC.md §5 (events table).
+
+# Each event has date_from + optional date_to, a category, title, markdown description,
+# the grades it impacted (`impact_grades`), and source URLs.
+
+# M1 placeholder — seeded with ~20 entries at Milestone 2, covering at minimum:
+#   - 2015-07 JCPOA Iran nuclear deal
+#   - 2018-05 Iran sanctions snapback (US withdrawal from JCPOA)
+#   - 2020-03 COVID demand shock
+#   - 2020-04 OPEC+ historic production cut
+#   - 2021-03 Murban launch on ICE Futures Abu Dhabi
+#   - 2022-02 Russia invasion of Ukraine
+#   - 2022-10 OPEC+ 2 mb/d cut
+#   - 2022-12 G7 Russia oil price cap
+#   - 2023-04 OPEC+ surprise cut
+#   - 2023-11 OPEC+ extended cuts
+#   - 2024+   Strait of Hormuz tensions / Houthi disruptions
+events: []

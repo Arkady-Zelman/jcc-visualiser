@@ -1,0 +1,11 @@
+-- =========================================================
+-- 001_init.sql — JCC Visualiser schema
+-- =========================================================
+-- M1 placeholder. Full DDL lives in BUILD_SPEC.md §5 and is applied at Milestone 2.
+-- Do not run this file as-is — it is the M1 stub.
+
+-- The Milestone 2 migration will create:
+--   grades, imports_monthly, composition_monthly, jcc_monthly,
+--   benchmark_prices_daily, benchmark_forwards_daily, jcc_futures_daily,
+--   events, grade_hs_mapping, compute_runs
+-- plus indexes per BUILD_SPEC.md §5.

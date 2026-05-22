@@ -1,0 +1,21 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/ingest-paj",
+      "schedule": "0 9 8 * *"
+    },
+    {
+      "path": "/api/cron/ingest-customs",
+      "schedule": "30 9 8 * *"
+    },
+    {
+      "path": "/api/cron/ingest-benchmarks",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/ingest-jcc-futures",
+      "schedule": "0 22 * * *"
+    }
+  ]
+}

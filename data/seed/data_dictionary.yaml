@@ -1,0 +1,16 @@
+# data_dictionary — every table and column with units, source, and update cadence.
+# Populated at Milestone 2 alongside the schema migration.
+# See BUILD_SPEC.md §5 for the schema and §7 for sources.
+
+# Tables (placeholders — fully described at Milestone 2):
+#   grades                    — master record of crude grades
+#   imports_monthly           — raw Japan Customs imports (month × HS code × origin)
+#   composition_monthly       — derived basket composition (month × grade)
+#   jcc_monthly               — official PAJ-published JCC value (¥/kl, USD/bbl)
+#   benchmark_prices_daily    — daily benchmark spot / settlement prices (USD/bbl)
+#   benchmark_forwards_daily  — daily benchmark forward-curve snapshots (USD/bbl)
+#   jcc_futures_daily         — CME JCC futures settlements (USD/bbl)
+#   events                    — curated annotations
+#   grade_hs_mapping          — curated HS-code → grade lookup
+#   compute_runs              — audit log of ingest and derivation runs
+tables: {}

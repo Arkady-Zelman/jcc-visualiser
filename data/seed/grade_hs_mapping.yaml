@@ -1,0 +1,10 @@
+# grade_hs_mapping — curated lookup from (HS code, origin country) → grade(s) and weights.
+# This is the editorial layer that bridges Japan Customs's HS-code-only data to named grades.
+# Loaded by `python -m ingest.seed` into the `grade_hs_mapping` table at Milestone 2.
+# Schema: see BUILD_SPEC.md §5 (grade_hs_mapping table) and §7.3 (derivation).
+
+# Each entry maps a (hs_code, origin_country) tuple to one or more grades with weights summing to 100.
+# applies_from / applies_to define the validity window (so e.g. UAE crude composition can shift over time).
+
+# M1 placeholder — curated at Milestone 2.
+mappings: []
