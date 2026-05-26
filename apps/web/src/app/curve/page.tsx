@@ -105,7 +105,7 @@ export default async function CurvePage() {
   const jccLatest = jccLatestResp.data;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-8 space-y-6">
+    <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-7 py-8 space-y-6">
       <header className="space-y-2">
         <p className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
           Curve

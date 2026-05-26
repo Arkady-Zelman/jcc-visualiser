@@ -84,19 +84,19 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
+  --background: oklch(0.10 0.01 260);
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
+  --card: oklch(0.20 0.012 260 / 38%);
   --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
+  --popover: oklch(0.18 0.012 260);
   --popover-foreground: oklch(0.985 0 0);
   --primary: oklch(0.922 0 0);
   --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
+  --secondary: oklch(0.269 0.01 260);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
+  --muted: oklch(0.269 0.01 260);
+  --muted-foreground: oklch(0.72 0 0);
+  --accent: oklch(0.269 0.01 260);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
@@ -107,11 +107,11 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
+  --sidebar: oklch(0.20 0.012 260);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent: oklch(0.269 0.01 260);
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
@@ -121,10 +121,53 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+  }
+  body {
+    @apply text-foreground antialiased;
+    font-feature-settings: "ss01" 1, "cv11" 1;
+    background:
+      radial-gradient(1200px 700px at 8% -10%, oklch(0.55 0.26 250 / 0.95), transparent 55%),
+      radial-gradient(1100px 850px at 110% 70%, oklch(0.52 0.24 210 / 0.85), transparent 60%),
+      radial-gradient(700px 500px at 50% 110%, oklch(0.46 0.20 15 / 0.55), transparent 65%),
+      radial-gradient(550px 450px at 85% 15%, oklch(0.55 0.22 290 / 0.60), transparent 60%),
+      oklch(0.10 0.01 260);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+  /* Subtle grid overlay, faded toward the edges. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    background-size: 80px 80px, 80px 80px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 0%, transparent 80%);
+  }
+}
+
+/* Glass utility — semi-translucent dark surface that refracts the ambient
+   gradient backdrop. Applied to Card by default; usable on any container. */
+@layer components {
+  .glass {
+    background:
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.06) 0%,
+        rgba(255, 255, 255, 0.02) 22%,
+        rgba(255, 255, 255, 0) 60%
+      ),
+      rgba(20, 22, 30, 0.55);
+    backdrop-filter: blur(36px) saturate(1.55);
+    -webkit-backdrop-filter: blur(36px) saturate(1.55);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.10),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+      0 1px 0 rgba(0, 0, 0, 0.6);
   }
 }

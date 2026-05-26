@@ -88,7 +88,7 @@ export default async function GradeDetailPage({ params }: PageProps) {
   const isSynthetic = grade.id.startsWith("unmapped_");
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-8">
+    <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-7 py-8">
       <Link
         href="/grades"
         className="mb-4 inline-flex items-center gap-1.5 text-xs text-zinc-500 transition-colors hover:text-zinc-900 dark:hover:text-zinc-100"

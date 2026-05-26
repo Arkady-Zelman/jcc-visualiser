@@ -60,7 +60,7 @@ export default async function CompositionPage({ searchParams }: PageProps) {
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-8">
+    <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-7 py-8">
       <header className="mb-6 space-y-2">
         <p className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
           Composition
