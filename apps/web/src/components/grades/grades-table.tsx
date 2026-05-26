@@ -82,7 +82,7 @@ export function GradesTable({ rows }: { rows: GradesTableRow[] }) {
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-800">
+    <div className="overflow-x-auto rounded-lg border border-zinc-200 dark:border-zinc-800">
       <Table>
         <TableHeader>
           <TableRow>

@@ -75,7 +75,16 @@ export default async function GradesPage() {
           )}
         </p>
       </header>
-      <GradesTable rows={rows} />
+      {rows.length === 0 ? (
+        <div className="rounded-md border border-dashed border-zinc-300 p-8 text-sm dark:border-zinc-700">
+          <p className="font-medium text-zinc-900 dark:text-zinc-100">No grades loaded</p>
+          <p className="mt-1 max-w-md text-zinc-600 dark:text-zinc-400">
+            Seed the reference data first: <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">python -m ingest.seed</code>.
+          </p>
+        </div>
+      ) : (
+        <GradesTable rows={rows} />
+      )}
     </div>
   );
 }

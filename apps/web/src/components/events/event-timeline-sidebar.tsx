@@ -80,7 +80,11 @@ export function EventTimelineSidebar({
                       aria-hidden
                     />
                   </PopoverTrigger>
-                  <PopoverContent side="left" align="start" className="w-96">
+                  <PopoverContent
+                    side="left"
+                    align="start"
+                    className="w-[min(24rem,calc(100vw-2rem))]"
+                  >
                     <EventCard event={evt} />
                   </PopoverContent>
                 </Popover>

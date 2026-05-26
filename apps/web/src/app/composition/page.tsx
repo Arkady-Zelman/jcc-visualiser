@@ -89,13 +89,29 @@ export default async function CompositionPage({ searchParams }: PageProps) {
         )}
       </header>
 
-      <Suspense>
-        <CompositionView
-          pivotedByMode={pivotedByMode}
-          events={events}
-          initialView={initialView}
+      {composition.length === 0 ? (
+        <EmptyState
+          title="No composition data yet"
+          body="Run the ingest pipeline (python -m ingest.customs && python -m ingest.derive_composition) to populate composition_monthly. The grade + HS mapping reference data is seeded — only the monthly facts are missing."
         />
-      </Suspense>
+      ) : (
+        <Suspense>
+          <CompositionView
+            pivotedByMode={pivotedByMode}
+            events={events}
+            initialView={initialView}
+          />
+        </Suspense>
+      )}
+    </div>
+  );
+}
+
+function EmptyState({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-md border border-dashed border-zinc-300 p-8 text-sm dark:border-zinc-700">
+      <p className="font-medium text-zinc-900 dark:text-zinc-100">{title}</p>
+      <p className="mt-1 max-w-md text-zinc-600 dark:text-zinc-400">{body}</p>
     </div>
   );
 }

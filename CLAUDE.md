@@ -4,20 +4,21 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ## Status
 
-**Milestone 5 shipped.** `/curve` is live as "How the JCC price moves" — JCC historical chart with event annotations, lag-aware JCC ~ Brent + WTI regression (R² = 0.964 with 2-month structural lag), implied next-month JCC forecast, 5-stage lag diagram, and a documented placeholder for the missing market forward curve. Adapted from the spec's original design after M3 found CME / ICE futures are paywalled.
+**Milestones 1–6 shipped — ready to demo.** All four product surfaces live and verified.
 
 Done so far:
 - **M1 Scaffold** — Next.js 16 + React 19 + Tailwind v4 + shadcn (base-nova) + Python 3.11 ingest venv.
 - **M2 Database** — 10 tables in Supabase (eu-west-2), 11 grades + 15 HS mappings + 13 events seeded.
 - **M3 Ingest** — PAJ JCC values (171 months), Japan Customs imports (2594 rows), Frankfurter FX + EIA WTI/Brent spot + WTI futures (~30K rows). Composition derived to 3131 rows across 183 months × 54 grades.
 - **M4 Composition + Grades + Annotations** — 3 routes live, 54 grade detail pages SSG-prerendered.
-- **M5 Curve (adapted)** — `/curve` page with lag-aware regression, historical chart, forecast card, lag diagram, forward-curve placeholder.
+- **M5 Curve (adapted)** — `/curve` with lag-aware regression, historical chart, forecast card, lag diagram, forward-curve placeholder.
+- **M6 Polish** — Sentry `withSentryConfig` + `captureException` on error boundaries; per-coefficient SEs (finding: WTI |t|=0.2 is not significant when Brent is in the model) + residuals chart; widened `impact_grades` on 4 events; mobile responsiveness pass; empty-state fallbacks; README with deploy + cadence + troubleshooting.
 
 Deferred to v1.5 (not blocking demo):
 - Daily CME JCC futures, Dubai, Oman, Murban — paywalled feeds.
 - ESPO daily price — Argus-paywalled.
 - Arab OSP monthly proxies — needs Aramco press-release scraper.
-- Sentry source-map upload (`withSentryConfig`).
+- WTI futures refresh — EIA `PET.RCLC*.D` series retired 2024-04, confirmed via API probe in M6.
 
 **Read `BUILD_SPEC.md` end-to-end before writing any code** — it is the source of truth for schema, sources, units, surfaces, and milestone gating. The spec is non-negotiable on schema, units, and grade-mapping decisions; minor naming and structure choices may be decided locally.
 

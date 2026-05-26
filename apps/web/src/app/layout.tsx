@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,17 +20,23 @@ export const metadata: Metadata = {
     "Research and explanation tool for the Japan Crude Cocktail — composition, prices, and forward curve.",
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
+
 function TopNav() {
   return (
     <header className="border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-950/80">
-      <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
+      <nav className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link
           href="/"
-          className="font-semibold tracking-tight text-zinc-950 dark:text-zinc-50"
+          className="shrink-0 text-sm font-semibold tracking-tight text-zinc-950 sm:text-base dark:text-zinc-50"
         >
-          JCC Visualiser
+          <span className="sm:hidden">JCC</span>
+          <span className="hidden sm:inline">JCC Visualiser</span>
         </Link>
-        <ul className="flex items-center gap-6 text-sm text-zinc-600 dark:text-zinc-400">
+        <ul className="flex items-center gap-3 text-xs text-zinc-600 sm:gap-6 sm:text-sm dark:text-zinc-400">
           <li>
             <Link
               href="/composition"

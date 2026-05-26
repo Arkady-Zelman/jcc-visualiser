@@ -69,10 +69,15 @@ export default async function CurvePage() {
   const brentMonthly = monthlyAverages(brentDaily);
   const aligned = alignSeries(jcc, brentMonthly, wtiMonthly);
 
-  // Fit JCC_usd_bbl ~ a·Brent + b·WTI + c.
-  const X = aligned.map((r) => [r.brent, r.wti]);
-  const y = aligned.map((r) => r.jccUsd);
-  const model = linearRegression(X, y);
+  const hasModelData = aligned.length >= 12;
+
+  // Fit JCC_usd_bbl ~ a·Brent + b·WTI + c. Only attempt with enough rows.
+  const model = hasModelData
+    ? linearRegression(
+        aligned.map((r) => [r.brent, r.wti]),
+        aligned.map((r) => r.jccUsd),
+      )
+    : null;
 
   // Implied next-month JCC: predict JCC[M+1] using Brent/WTI from M+1-LAG_MONTHS,
   // i.e. the same lag the historical regression was fit on.
@@ -90,7 +95,7 @@ export default async function CurvePage() {
   const wti30 = lastNDayAverage(wtiDaily, 30);
   const fx30 = lastNDayAverage(fxDaily, 30);
   const impliedUsd =
-    brentInput != null && wtiInput != null
+    model && brentInput != null && wtiInput != null
       ? predict({ coefficients: model.coefficients, intercept: model.intercept }, [brentInput, wtiInput])
       : null;
   // 1 bbl = 0.158987 kl, so ¥/kl ≈ (USD/bbl × JPY/USD) / 0.158987.
@@ -130,6 +135,15 @@ export default async function CurvePage() {
         )}
       </header>
 
+      {jcc.length === 0 ? (
+        <div className="rounded-md border border-dashed border-zinc-300 p-8 text-sm dark:border-zinc-700">
+          <p className="font-medium text-zinc-900 dark:text-zinc-100">No JCC history yet</p>
+          <p className="mt-1 max-w-md text-zinc-600 dark:text-zinc-400">
+            Run <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">python -m ingest.paj</code> and <code className="rounded bg-zinc-100 px-1 dark:bg-zinc-800">python -m ingest.benchmarks</code> to populate the price history and benchmark series.
+          </p>
+        </div>
+      ) : (
+        <>
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-medium">JCC price history</CardTitle>
@@ -140,7 +154,7 @@ export default async function CurvePage() {
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <RegressionCard model={model} aligned={aligned} />
+        {model && <RegressionCard model={model} aligned={aligned} />}
         <ForecastCard
           impliedUsd={impliedUsd}
           impliedJpy={impliedJpy}
@@ -169,6 +183,8 @@ export default async function CurvePage() {
       <LagDiagram />
 
       <ForwardCurvePlaceholder />
+        </>
+      )}
     </div>
   );
 }

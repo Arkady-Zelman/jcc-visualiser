@@ -21,7 +21,10 @@ events:
       from January 2016 reopened Iranian crude exports. Japanese imports of Iranian
       Heavy / Light recovered through 2016–2017, before being cut again by the 2018
       US withdrawal.
-    impact_grades: []
+    impact_grades:
+      - unmapped_IR
+      - arab_medium
+      - arab_heavy
     sources:
       - https://www.state.gov/jcpoa/
 
@@ -52,6 +55,7 @@ events:
       entirely from May 2019. Japanese refiners increased lifting of Arab Medium /
       Heavy as the closest medium-sour substitute.
     impact_grades:
+      - unmapped_IR
       - arab_medium
       - arab_heavy
     sources:
@@ -122,6 +126,10 @@ events:
     impact_grades:
       - espo
       - wti
+      - arab_light
+      - arab_medium
+      - arab_heavy
+      - murban
     sources:
       - https://www.bbc.com/news/world-europe-60506682
 
@@ -225,6 +233,15 @@ events:
     impact_grades:
       - espo
       - wti
+      - arab_light
+      - arab_medium
+      - arab_heavy
+      - arab_extra_light
+      - murban
+      - das
+      - upper_zakum
+      - oman
+      - dubai
     sources:
       - https://energyandcleanair.org/april-2026-monthly-analysis-of-russian-fossil-fuel-exports-and-sanctions/
       - https://carnegieendowment.org/russia-eurasia/politika/2026/04/russia-japan-oil-projects

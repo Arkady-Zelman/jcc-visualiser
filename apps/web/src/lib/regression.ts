@@ -17,6 +17,10 @@ export interface RegressionResult {
   coefficients: number[];
   /** Intercept term (β₀). */
   intercept: number;
+  /** Standard error of each coefficient, same order as `coefficients`. */
+  coefficientSE: number[];
+  /** Standard error of the intercept. */
+  interceptSE: number;
   /** Coefficient of determination, 0–1. */
   rSquared: number;
   /** Residual standard error. */
@@ -63,8 +67,12 @@ export function linearRegression(X: number[][], y: number[]): RegressionResult {
     }
   }
 
-  // Solve (XtX) β = Xty via Gauss-Jordan elimination on the augmented matrix.
-  const beta = solveSquareSystem(XtX, Xty);
+  // Invert XᵀX once — gets us both β̂ and the covariance matrix.
+  const invXtX = invertSquareMatrix(XtX);
+  const beta: number[] = new Array(p).fill(0);
+  for (let a = 0; a < p; a++) {
+    for (let b = 0; b < p; b++) beta[a] += invXtX[a][b] * Xty[b];
+  }
 
   // Build predictions + residuals.
   const yMean = y.reduce((s, v) => s + v, 0) / n;
@@ -84,11 +92,16 @@ export function linearRegression(X: number[][], y: number[]): RegressionResult {
   const rSquared = ssTot === 0 ? 1 : 1 - ssRes / ssTot;
   // dof = n - p (we estimated p parameters)
   const dof = Math.max(1, n - p);
-  const residualStdError = Math.sqrt(ssRes / dof);
+  const sigma2 = ssRes / dof;
+  const residualStdError = Math.sqrt(sigma2);
+  // Cov(β̂) = σ² · (XᵀX)⁻¹. SE_i = sqrt of the i-th diagonal entry.
+  const seAll = invXtX.map((row, i) => Math.sqrt(Math.max(0, sigma2 * row[i])));
 
   return {
     coefficients: beta.slice(1),
     intercept: beta[0],
+    coefficientSE: seAll.slice(1),
+    interceptSE: seAll[0],
     rSquared,
     residualStdError,
     predicted,
@@ -111,16 +124,23 @@ export function predict(model: Pick<RegressionResult, "coefficients" | "intercep
 }
 
 /**
- * Solve A·x = b for square A via Gauss-Jordan elimination with partial pivoting.
- * Returns x. Throws if A is singular.
+ * Invert a square matrix A via Gauss-Jordan elimination on [A | I] with partial
+ * pivoting. Returns A⁻¹. Throws if A is singular.
+ *
+ * Used by `linearRegression` to get β̂ = (XᵀX)⁻¹ · Xᵀy and the covariance
+ * matrix Cov(β̂) = σ² · (XᵀX)⁻¹ in a single inversion.
  */
-function solveSquareSystem(A: number[][], b: number[]): number[] {
+function invertSquareMatrix(A: number[][]): number[][] {
   const n = A.length;
-  // Augmented matrix [A | b].
-  const M: number[][] = A.map((row, i) => [...row, b[i]]);
+  // Augmented matrix [A | I].
+  const M: number[][] = A.map((row, i) => {
+    const r = new Array<number>(2 * n).fill(0);
+    for (let c = 0; c < n; c++) r[c] = row[c];
+    r[n + i] = 1;
+    return r;
+  });
 
   for (let col = 0; col < n; col++) {
-    // Partial pivot: find the row with the largest absolute value in this column.
     let pivot = col;
     for (let r = col + 1; r < n; r++) {
       if (Math.abs(M[r][col]) > Math.abs(M[pivot][col])) pivot = r;
@@ -131,19 +151,22 @@ function solveSquareSystem(A: number[][], b: number[]): number[] {
     if (pivot !== col) {
       [M[col], M[pivot]] = [M[pivot], M[col]];
     }
-    // Eliminate.
     const piv = M[col][col];
+    // Normalize the pivot row.
+    for (let c = 0; c < 2 * n; c++) M[col][c] /= piv;
+    // Eliminate the rest.
     for (let r = 0; r < n; r++) {
       if (r === col) continue;
-      const factor = M[r][col] / piv;
+      const factor = M[r][col];
       if (factor === 0) continue;
-      for (let c = col; c <= n; c++) {
+      for (let c = 0; c < 2 * n; c++) {
         M[r][c] -= factor * M[col][c];
       }
     }
   }
 
-  const x = new Array<number>(n);
-  for (let i = 0; i < n; i++) x[i] = M[i][n] / M[i][i];
-  return x;
+  // Extract the right half — that's A⁻¹.
+  const inv: number[][] = new Array(n);
+  for (let i = 0; i < n; i++) inv[i] = M[i].slice(n);
+  return inv;
 }
