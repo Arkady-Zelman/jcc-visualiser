@@ -1,8 +1,163 @@
 # grades — master record of every crude grade that has ever appeared in the JCC basket.
-# Loaded by `python -m ingest.seed` into the `grades` table at Milestone 2.
+# Loaded by `python -m ingest.seed` into the `grades` table.
 # Schema: see BUILD_SPEC.md §5 (grades table).
+#
+# Notes on coverage:
+#   - These 11 majors typically cover >85% of Japanese crude imports by volume.
+#   - "Other" / minor origins are bucketed into synthetic `unmapped_<country>` grades by
+#     derive_composition.py at runtime (no entry needed here).
+#   - API gravity and sulphur figures are typical assay values; physical cargoes vary.
+#   - primary_benchmark = the benchmark_prices_daily.benchmark code used to plot this
+#     grade's price line on the /grades/[id] detail page.
 
-# M1 placeholder — populated at Milestone 2 with ~10 majors:
-#   murban, das, upper_zakum, arab_extra_light, arab_light, arab_medium,
-#   arab_heavy, oman, dubai, espo, wti.
-grades: []
+grades:
+  # ---------- UAE ----------
+  - id: murban
+    display_name: Murban
+    origin_country: AE
+    region: middle_east
+    api_gravity: 40.40
+    sulphur_pct: 0.770
+    type: light_sour
+    primary_benchmark: murban
+    notes: |
+      Light sour from ADNOC's onshore Murban field, Abu Dhabi. The de-facto Middle East
+      light-sour benchmark since the ICE Futures Abu Dhabi launch on 2021-03-29. Historically
+      sold at OSP (official selling price); now price discovery is via the ICE Murban futures.
+      A staple in the Japanese refinery slate; share has risen materially since 2014 with
+      production growth and again post-2021 with the futures launch.
+
+  - id: das
+    display_name: Das Blend
+    origin_country: AE
+    region: middle_east
+    api_gravity: 39.50
+    sulphur_pct: 1.090
+    type: light_sour
+    primary_benchmark: dubai
+    notes: |
+      Light sour from ADNOC's offshore Lower Zakum, Umm Shaif, and other fields, blended
+      and exported from Das Island. Often co-marketed with Murban into Asian refineries.
+      Tracks Dubai closely.
+
+  - id: upper_zakum
+    display_name: Upper Zakum
+    origin_country: AE
+    region: middle_east
+    api_gravity: 33.90
+    sulphur_pct: 1.770
+    type: medium_sour
+    primary_benchmark: dubai
+    notes: |
+      Medium sour from ADNOC's offshore Upper Zakum field. Heavier and sourer than Murban;
+      preferred by complex refineries running heavier middle-distillate slates.
+
+  # ---------- Saudi Arabia ----------
+  - id: arab_extra_light
+    display_name: Arab Extra Light
+    origin_country: SA
+    region: middle_east
+    api_gravity: 38.50
+    sulphur_pct: 1.080
+    type: light_sour
+    primary_benchmark: arab_extra_light
+    notes: |
+      Saudi Aramco light-sour grade. Together with Arab Light, one of the largest single
+      contributors to the JCC basket since the mid-2010s.
+
+  - id: arab_light
+    display_name: Arab Light
+    origin_country: SA
+    region: middle_east
+    api_gravity: 32.80
+    sulphur_pct: 1.970
+    type: medium_sour
+    primary_benchmark: arab_light
+    notes: |
+      Saudi Aramco's benchmark medium-sour. Anchor of the Asian refinery slate. Saudi Aramco
+      sets a monthly OSP for Asia priced as a differential to the average of Oman and Dubai.
+
+  - id: arab_medium
+    display_name: Arab Medium
+    origin_country: SA
+    region: middle_east
+    api_gravity: 30.20
+    sulphur_pct: 2.620
+    type: medium_sour
+    primary_benchmark: arab_medium
+    notes: Saudi Aramco medium-sour. Higher sulphur than Arab Light; refining margin reflects this.
+
+  - id: arab_heavy
+    display_name: Arab Heavy
+    origin_country: SA
+    region: middle_east
+    api_gravity: 28.10
+    sulphur_pct: 2.870
+    type: heavy_sour
+    primary_benchmark: arab_heavy
+    notes: |
+      Saudi Aramco heavy-sour. Stepped up in the Japanese mix during the 2018 Iran-sanctions
+      window as a partial substitute for departing Iranian medium-sour barrels.
+
+  # ---------- Oman ----------
+  - id: oman
+    display_name: Oman Blend
+    origin_country: OM
+    region: middle_east
+    api_gravity: 33.50
+    sulphur_pct: 1.140
+    type: medium_sour
+    primary_benchmark: oman
+    notes: |
+      Medium sour from Petroleum Development Oman. One of the two underliers (with Dubai)
+      that anchor Asian crude pricing — Saudi/Kuwait/ADNOC OSPs reference the Oman/Dubai
+      average. DME Oman futures (since 2007) provide a transparent forward curve.
+
+  # ---------- "Dubai" ----------
+  # Dubai is a basket assessment (Platts), not a single deliverable grade, but minor
+  # physical "Dubai" cargoes still flow. We keep it as a grade for completeness and use
+  # the assessment for the price line.
+  - id: dubai
+    display_name: Dubai
+    origin_country: AE
+    region: middle_east
+    api_gravity: 31.00
+    sulphur_pct: 2.000
+    type: medium_sour
+    primary_benchmark: dubai
+    notes: |
+      Historic Dubai field, now small physical volume. The "Dubai" benchmark itself is the
+      Platts MOC-derived basket assessment (Dubai, Oman, Murban, Upper Zakum). For the
+      visualiser we treat any nominal "Dubai" cargo as this entry and use the assessment
+      price for the chart line.
+
+  # ---------- Russia ----------
+  - id: espo
+    display_name: ESPO Blend / Sakhalin
+    origin_country: RU
+    region: russia
+    api_gravity: 34.80
+    sulphur_pct: 0.620
+    type: medium_sweet
+    primary_benchmark: oman   # ESPO is OSP'd off Dubai/Oman with a quality premium; no liquid ESPO futures.
+    notes: |
+      Light sweet, exported from Kozmino (Pacific) — the closest crude to Japan by shipping
+      distance. Includes Sakhalin Blend / Sokol via the Sakhalin-1 and Sakhalin-2 projects.
+      Pre-2022 share was modest but growing; post-2022 invasion of Ukraine and the G7
+      price cap (2022-12-05) created a step change in pricing dynamics. Japanese imports
+      continued at lower volumes under the Sakhalin-2 LNG/crude exemption.
+
+  # ---------- US ----------
+  - id: wti
+    display_name: WTI / US Gulf grades
+    origin_country: US
+    region: americas
+    api_gravity: 39.60
+    sulphur_pct: 0.240
+    type: light_sweet
+    primary_benchmark: wti
+    notes: |
+      Light sweet US shale crude (WTI Midland and Domestic Sweet basket), exported via US
+      Gulf terminals. Negligible Japanese imports pre-2016 (US crude export ban), small
+      and growing post-2016, accelerated post-2022 as a strategic diversifier away from
+      Russia and as a Hormuz hedge.

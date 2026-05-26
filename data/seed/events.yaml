@@ -1,20 +1,230 @@
 # events — curated geopolitical / market events used for annotation on /composition and /grades.
-# Loaded by `python -m ingest.seed` into the `events` table at Milestone 2.
+# Loaded by `python -m ingest.seed` into the `events` table.
 # Schema: see BUILD_SPEC.md §5 (events table).
+#
+# Each event must:
+#   - explain *why* the basket composition or grade price changed
+#   - have a date_from (point-in-time event) and optional date_to (windowed event)
+#   - list impact_grades (which grades.id this affected)
+#   - cite at least one source URL
+# description_md is rendered as markdown in the chart hover-card / event detail.
 
-# Each event has date_from + optional date_to, a category, title, markdown description,
-# the grades it impacted (`impact_grades`), and source URLs.
+events:
+  # ============== 2015 ==============
+  - id: jcpoa_signed_2015
+    date_from: '2015-07-14'
+    date_to: null
+    category: geopolitics
+    title: JCPOA signed — Iran nuclear deal
+    description_md: |
+      P5+1 and Iran agree the Joint Comprehensive Plan of Action. Sanctions relief
+      from January 2016 reopened Iranian crude exports. Japanese imports of Iranian
+      Heavy / Light recovered through 2016–2017, before being cut again by the 2018
+      US withdrawal.
+    impact_grades: []
+    sources:
+      - https://www.state.gov/jcpoa/
 
-# M1 placeholder — seeded with ~20 entries at Milestone 2, covering at minimum:
-#   - 2015-07 JCPOA Iran nuclear deal
-#   - 2018-05 Iran sanctions snapback (US withdrawal from JCPOA)
-#   - 2020-03 COVID demand shock
-#   - 2020-04 OPEC+ historic production cut
-#   - 2021-03 Murban launch on ICE Futures Abu Dhabi
-#   - 2022-02 Russia invasion of Ukraine
-#   - 2022-10 OPEC+ 2 mb/d cut
-#   - 2022-12 G7 Russia oil price cap
-#   - 2023-04 OPEC+ surprise cut
-#   - 2023-11 OPEC+ extended cuts
-#   - 2024+   Strait of Hormuz tensions / Houthi disruptions
-events: []
+  - id: us_crude_export_ban_lifted_2015
+    date_from: '2015-12-18'
+    date_to: null
+    category: policy
+    title: US crude oil export ban lifted
+    description_md: |
+      Omnibus Appropriations Act repealed the 1975 ban on US crude exports, opening
+      the door for US shale crude (WTI Midland and Gulf Coast grades) into Asia.
+      Japanese imports of US crude grew from negligible levels through the late 2010s.
+    impact_grades:
+      - wti
+    sources:
+      - https://www.eia.gov/todayinenergy/detail.php?id=24432
+
+  # ============== 2018 ==============
+  - id: iran_sanctions_snapback_2018
+    date_from: '2018-05-08'
+    date_to: null
+    category: sanctions
+    title: US withdraws from JCPOA — Iran sanctions snapback
+    description_md: |
+      President Trump announces US withdrawal from the JCPOA, with full secondary
+      sanctions on Iranian oil to be reimposed by November 2018. Japan was initially
+      granted a Significant Reduction Exception but eliminated Iranian crude imports
+      entirely from May 2019. Japanese refiners increased lifting of Arab Medium /
+      Heavy as the closest medium-sour substitute.
+    impact_grades:
+      - arab_medium
+      - arab_heavy
+    sources:
+      - https://2017-2021.state.gov/the-united-states-withdraws-from-the-iran-nuclear-deal/
+      - https://www.reuters.com/article/us-japan-iran-oil-idUSKCN1S507A
+
+  # ============== 2020 ==============
+  - id: covid_demand_shock_2020
+    date_from: '2020-03-01'
+    date_to: '2020-05-31'
+    category: demand_shock
+    title: COVID-19 demand collapse
+    description_md: |
+      Global oil demand collapsed by ~25 mb/d through April 2020 as lockdowns spread.
+      JCC printed historic lows (April 2020 monthly average <¥18,000/kl). WTI front
+      month traded negative on 2020-04-20. Japanese imports compressed; composition
+      relatively stable but absolute volumes fell sharply.
+    impact_grades: []
+    sources:
+      - https://www.iea.org/reports/oil-market-report-april-2020
+
+  - id: opec_plus_historic_cut_2020
+    date_from: '2020-04-12'
+    date_to: null
+    category: opec_decision
+    title: OPEC+ agrees historic 9.7 mb/d production cut
+    description_md: |
+      OPEC and allies (incl. Russia) agreed the largest oil production cut in history —
+      9.7 mb/d for May–June 2020, tapering thereafter — after the April price collapse.
+      Set the baseline for the 2020–2022 OPEC+ supply-management era.
+    impact_grades:
+      - arab_light
+      - arab_medium
+      - arab_heavy
+      - arab_extra_light
+      - oman
+      - espo
+    sources:
+      - https://www.opec.org/opec_web/en/press_room/5891.htm
+
+  # ============== 2021 ==============
+  - id: murban_futures_launch_2021
+    date_from: '2021-03-29'
+    date_to: null
+    category: contract_launch
+    title: ICE Murban Crude Oil Futures launch
+    description_md: |
+      ADNOC launched the Murban futures contract on ICE Futures Abu Dhabi (IFAD).
+      First Middle East crude with full futures-based price discovery (not OSP).
+      Marked Murban's emergence as the dominant Middle East light-sour benchmark for
+      Asia. Murban share in Japanese imports has continued to rise post-launch.
+    impact_grades:
+      - murban
+    sources:
+      - https://www.adnoc.ae/en/news-and-media/press-releases/2021/successful-launch-of-ifad-and-murban-futures-contract
+
+  # ============== 2022 ==============
+  - id: russia_invasion_ukraine_2022
+    date_from: '2022-02-24'
+    date_to: null
+    category: geopolitics
+    title: Russia invades Ukraine
+    description_md: |
+      Russia's full-scale invasion of Ukraine triggered Western sanctions on Russian
+      energy. Brent spiked above $130/bbl in early March. Japanese policy preserved
+      Sakhalin-1 / Sakhalin-2 exemptions but other Russian crude flows to Japan
+      declined. Composition shift toward Middle East and incremental US barrels.
+    impact_grades:
+      - espo
+      - wti
+    sources:
+      - https://www.bbc.com/news/world-europe-60506682
+
+  - id: opec_plus_2mbd_cut_oct_2022
+    date_from: '2022-10-05'
+    date_to: null
+    category: opec_decision
+    title: OPEC+ announces 2 mb/d production cut
+    description_md: |
+      OPEC+ ministers agreed a 2 mb/d cut from November 2022 — the deepest cut since
+      the 2020 pandemic response — over US objections. Tightened the Asian sour
+      complex; widened the Brent-Dubai EFS.
+    impact_grades:
+      - arab_light
+      - arab_medium
+      - arab_heavy
+      - arab_extra_light
+      - oman
+    sources:
+      - https://www.opec.org/opec_web/en/press_room/7012.htm
+
+  - id: g7_russia_price_cap_2022
+    date_from: '2022-12-05'
+    date_to: null
+    category: sanctions
+    title: G7 + EU + Australia Russia oil price cap ($60/bbl)
+    description_md: |
+      Co-ordinated price cap on Russian seaborne crude exports came into force at
+      $60/bbl. Russian Urals traded at deep discounts to Brent through 2023; Asian
+      buyers (China, India, Türkiye) absorbed displaced barrels. Japan's ESPO/Sakhalin
+      pricing arrangements continued under exemption, but the cap reshaped Russia's
+      global crude flows and the pricing reference set.
+    impact_grades:
+      - espo
+    sources:
+      - https://home.treasury.gov/news/press-releases/jy1133
+
+  # ============== 2023 ==============
+  - id: opec_plus_surprise_cut_apr_2023
+    date_from: '2023-04-02'
+    date_to: null
+    category: opec_decision
+    title: OPEC+ surprise voluntary cuts (~1.66 mb/d)
+    description_md: |
+      Saudi Arabia, UAE, Iraq, Kuwait, Algeria, Oman, Kazakhstan, Gabon announced
+      surprise voluntary cuts totalling ~1.66 mb/d from May 2023 through end of 2023.
+      Lifted the sour complex; Saudi Aramco raised Asian OSPs for Arab Light shortly after.
+    impact_grades:
+      - arab_light
+      - arab_extra_light
+      - oman
+      - murban
+    sources:
+      - https://www.reuters.com/business/energy/saudi-arabia-other-opec-producers-announce-voluntary-oil-output-cuts-2023-04-02/
+
+  - id: opec_plus_extended_cuts_nov_2023
+    date_from: '2023-11-30'
+    date_to: null
+    category: opec_decision
+    title: OPEC+ extends voluntary cuts into Q1 2024
+    description_md: |
+      OPEC+ rolled forward voluntary cuts (Saudi 1 mb/d, plus others) into Q1 2024
+      with subsequent extensions through 2024 and 2025. Sustained tight Asian sour
+      market.
+    impact_grades:
+      - arab_light
+      - arab_medium
+      - oman
+      - murban
+    sources:
+      - https://www.opec.org/opec_web/en/press_room/7253.htm
+
+  # ============== 2024 ==============
+  - id: red_sea_houthi_disruption_2024
+    date_from: '2024-01-01'
+    date_to: null
+    category: supply_shock
+    title: Red Sea / Bab el-Mandeb shipping disruption (Houthi attacks)
+    description_md: |
+      Sustained Houthi attacks on commercial shipping in the southern Red Sea and Bab
+      el-Mandeb pushed crude and product tankers around the Cape of Good Hope, adding
+      ~14 days and ~$1–2/bbl to West→East crude voyages. Marginal substitution effect
+      toward US Gulf and Middle East barrels for Asian buyers.
+    impact_grades:
+      - wti
+    sources:
+      - https://www.eia.gov/todayinenergy/detail.php?id=61322
+
+  # ============== 2026 ==============
+  - id: hormuz_tensions_2026
+    date_from: '2026-04-01'
+    date_to: null
+    category: geopolitics
+    title: Strait of Hormuz tensions and Japanese diversification
+    description_md: |
+      Heightened geopolitical risk in the Strait of Hormuz (Iran/Israel escalation)
+      prompted Japanese refiners to accelerate diversification of crude sourcing —
+      visible as higher Sakhalin-2 lifting (despite the broader G7 cap framework),
+      incremental US WTI test cargoes, and slight reduction in single-source Hormuz
+      dependence. The Middle East share remains ~80% but composition diversifies.
+    impact_grades:
+      - espo
+      - wti
+    sources:
+      - https://energyandcleanair.org/april-2026-monthly-analysis-of-russian-fossil-fuel-exports-and-sanctions/
+      - https://carnegieendowment.org/russia-eurasia/politika/2026/04/russia-japan-oil-projects

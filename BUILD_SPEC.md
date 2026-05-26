@@ -203,6 +203,7 @@ create table grades (
   api_gravity     numeric(5,2),                     -- degrees API
   sulphur_pct     numeric(5,3),                     -- weight %
   type            text not null check (type in ('light_sweet','light_sour','medium_sweet','medium_sour','heavy_sweet','heavy_sour')),
+  primary_benchmark text,                           -- which benchmark_prices_daily.benchmark to plot for this grade's price line
   first_seen_in_jcc date,                           -- populated by derive_composition
   last_seen_in_jcc  date,
   notes           text,                             -- curator notes

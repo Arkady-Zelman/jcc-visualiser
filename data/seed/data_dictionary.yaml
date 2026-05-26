@@ -1,16 +1,131 @@
 # data_dictionary — every table and column with units, source, and update cadence.
-# Populated at Milestone 2 alongside the schema migration.
-# See BUILD_SPEC.md §5 for the schema and §7 for sources.
+# This is the canonical reference for units and provenance. The §15 working agreement
+# says: "non-negotiable on units and grade-mapping decisions" — this YAML is where
+# units are pinned.
 
-# Tables (placeholders — fully described at Milestone 2):
-#   grades                    — master record of crude grades
-#   imports_monthly           — raw Japan Customs imports (month × HS code × origin)
-#   composition_monthly       — derived basket composition (month × grade)
-#   jcc_monthly               — official PAJ-published JCC value (¥/kl, USD/bbl)
-#   benchmark_prices_daily    — daily benchmark spot / settlement prices (USD/bbl)
-#   benchmark_forwards_daily  — daily benchmark forward-curve snapshots (USD/bbl)
-#   jcc_futures_daily         — CME JCC futures settlements (USD/bbl)
-#   events                    — curated annotations
-#   grade_hs_mapping          — curated HS-code → grade lookup
-#   compute_runs              — audit log of ingest and derivation runs
-tables: {}
+tables:
+  grades:
+    description: Master record of every crude grade that has ever appeared in the JCC basket.
+    update_cadence: Manually curated. Edited via data/seed/grades.yaml + `python -m ingest.seed`.
+    columns:
+      id:                {type: text PK,        unit: slug,        notes: snake_case stable identifier}
+      display_name:      {type: text,           unit: '',          notes: human-readable name}
+      origin_country:    {type: text,           unit: ISO 3166-1 alpha-2}
+      region:            {type: text,           unit: enum,        values: [middle_east, russia, americas, africa, asia_pacific, europe, other]}
+      api_gravity:       {type: numeric(5,2),   unit: degrees API}
+      sulphur_pct:       {type: numeric(5,3),   unit: weight %}
+      type:              {type: text,           unit: enum,        values: [light_sweet, light_sour, medium_sweet, medium_sour, heavy_sweet, heavy_sour]}
+      primary_benchmark: {type: text,           unit: '',          notes: which benchmark_prices_daily.benchmark code to plot}
+      first_seen_in_jcc: {type: date,           unit: month,       notes: derived by derive_composition}
+      last_seen_in_jcc:  {type: date,           unit: month,       notes: derived by derive_composition}
+      notes:             {type: text,           unit: markdown}
+
+  imports_monthly:
+    description: Raw Japan Customs monthly crude imports. One row per (month, HS code, origin).
+    source: Japan Customs Trade Statistics via e-Stat API (`customs.go.jp/toukei`).
+    update_cadence: Monthly, 8th of month 09:30 UTC (Vercel Cron → `ingest.customs`).
+    columns:
+      month:           {type: date PK,         unit: first-of-month UTC}
+      hs_code:         {type: text PK,         unit: '',          notes: 2709.00.900 in v1; 2709.00.100 condensate excluded}
+      origin_country:  {type: text PK,         unit: ISO 3166-1 alpha-2}
+      volume_kl:       {type: numeric(14,3),   unit: kilolitres,  conversion: 1 bbl = 0.158987 kl}
+      value_jpy:       {type: numeric(18,0),   unit: JPY (CIF)}
+      source:          {type: text,            unit: '',          default: customs}
+      ingested_at:     {type: timestamptz,     unit: UTC}
+
+  composition_monthly:
+    description: Derived basket composition — month × grade × volume + share.
+    source: derive_composition.py joining imports_monthly with grade_hs_mapping.
+    update_cadence: After every `ingest.customs` run (idempotent re-derive).
+    columns:
+      month:        {type: date PK,         unit: first-of-month UTC}
+      grade_id:     {type: text PK FK,      unit: '',         notes: references grades(id); synthetic 'unmapped_<country>' for gaps}
+      volume_kl:    {type: numeric(14,3),   unit: kilolitres}
+      value_jpy:    {type: numeric(18,0),   unit: JPY}
+      share_pct:    {type: numeric(6,3),    unit: '%',        notes: volume share of the month basket, 0–100}
+      source:       {type: text,            unit: '',         default: derived}
+      ingested_at:  {type: timestamptz,     unit: UTC}
+
+  jcc_monthly:
+    description: Official PAJ-published JCC value. The headline number.
+    source: Petroleum Association of Japan (PAJ) statistics portal + e-Stat mirror.
+    update_cadence: Monthly, 8th of month 09:00 UTC. Provisional → revised → final lifecycle.
+    columns:
+      month:                  {type: date PK,         unit: first-of-month UTC}
+      jcc_value_jpy_per_kl:   {type: numeric(12,2),   unit: ¥/kl,       notes: native unit Japan publishes}
+      jcc_value_usd_per_bbl:  {type: numeric(10,4),   unit: USD/bbl,    notes: derived using monthly mean FX from benchmark_prices_daily.jpy_usd_fx}
+      status:                 {type: text,            unit: enum,       values: [provisional, revised, final]}
+      source:                 {type: text,            unit: '',         default: paj}
+      source_url:             {type: text,            unit: URL}
+
+  benchmark_prices_daily:
+    description: Daily benchmark spot / settlement prices. Includes JPY/USD FX as a pseudo-benchmark row.
+    source: CME (Dubai, Murban), ICE (Brent, Oman), EIA API (WTI, Brent spot), OPEC (basket), Frankfurter ECB (FX).
+    update_cadence: Daily 06:00 UTC.
+    columns:
+      date:           {type: date PK,         unit: trade date}
+      benchmark:      {type: text PK,         unit: enum,       values: [dubai, oman, murban, brent, wti, arab_light, arab_medium, arab_heavy, arab_extra_light, espo, opec_basket, jpy_usd_fx]}
+      price_usd_bbl:  {type: numeric(10,4),   unit: USD/bbl,    notes: for benchmark='jpy_usd_fx' this column stores JPY per USD instead}
+      source:         {type: text,            unit: '',         values: [cme, ice, eia, opec, frankfurter]}
+
+  benchmark_forwards_daily:
+    description: Daily benchmark forward curve snapshots. One row per (settlement_date, benchmark, contract_month).
+    source: CME and ICE settlement files (free, daily, end-of-day).
+    update_cadence: Daily 06:00 UTC, same job as benchmark_prices_daily.
+    columns:
+      settlement_date:  {type: date PK,         unit: trade date}
+      benchmark:        {type: text PK,         unit: enum,       values: [dubai, oman, murban, brent, wti]}
+      contract_month:   {type: date PK,         unit: first-of-month for contract delivery}
+      price_usd_bbl:    {type: numeric(10,4),   unit: USD/bbl}
+
+  jcc_futures_daily:
+    description: CME JCC futures daily settlements — the actual JCC forward curve.
+    source: CME Group JCC futures settlement file.
+    update_cadence: Daily 22:00 UTC (after CME settles).
+    columns:
+      settlement_date:  {type: date PK,         unit: trade date}
+      contract_month:   {type: date PK,         unit: first-of-month for contract delivery}
+      price_usd_bbl:    {type: numeric(10,4),   unit: USD/bbl}
+      open_interest:    {type: integer,         unit: contracts}
+      volume:           {type: integer,         unit: contracts}
+
+  events:
+    description: Curated geopolitical / market events used for chart annotations.
+    source: Manually curated. Edited via data/seed/events.yaml + `python -m ingest.seed`.
+    update_cadence: On any spec or operator-led curatorial change.
+    columns:
+      id:              {type: text PK,         unit: slug}
+      date_from:       {type: date,            unit: event start}
+      date_to:         {type: date,            unit: event end (nullable for point-in-time)}
+      category:        {type: text,            unit: enum,       values: [sanctions, geopolitics, supply_shock, demand_shock, opec_decision, contract_launch, disaster, policy]}
+      title:           {type: text,            unit: '',         notes: short headline}
+      description_md:  {type: text,            unit: markdown}
+      impact_grades:   {type: text[],          unit: '',         notes: array of grades.id}
+      sources:         {type: text[],          unit: URL[]}
+
+  grade_hs_mapping:
+    description: Curated lookup from (HS code, origin country) → grade(s) with weights and validity window.
+    source: Manually curated. Edited via data/seed/grade_hs_mapping.yaml + `python -m ingest.seed`.
+    update_cadence: On any curatorial refinement. Re-run `python -m ingest.derive_composition` to apply.
+    columns:
+      hs_code:        {type: text PK,         unit: '',           notes: 2709.00.900 in v1}
+      origin_country: {type: text PK,         unit: ISO 3166-1 alpha-2}
+      grade_id:       {type: text PK FK,      unit: '',           notes: references grades(id)}
+      weight_pct:     {type: numeric(5,2),    unit: '%',          notes: per-tuple weights sum to ~100 within a validity window}
+      applies_from:   {type: date PK,         unit: inclusive}
+      applies_to:     {type: date,            unit: '',           notes: nullable = open-ended}
+
+  compute_runs:
+    description: Audit log of every ingest / derivation run. Crash-safe via try/finally.
+    source: Written by every job in apps/ingest/.
+    update_cadence: One row per run (started + finished).
+    columns:
+      id:                {type: uuid PK,         unit: '',         default: gen_random_uuid()}
+      kind:              {type: text,            unit: enum,       values: [ingest_paj, ingest_customs, ingest_benchmarks, ingest_jcc_futures, derive_composition, seed]}
+      status:            {type: text,            unit: enum,       values: [running, success, error]}
+      started_at:        {type: timestamptz,     unit: UTC}
+      finished_at:       {type: timestamptz,     unit: UTC (nullable while running)}
+      duration_seconds:  {type: numeric(10,2),   unit: seconds}
+      row_count:         {type: integer,         unit: rows affected}
+      error_message:     {type: text,            unit: '',         notes: nullable}
+      output_jsonb:      {type: jsonb,           unit: '',         notes: free-form per-job structured output}

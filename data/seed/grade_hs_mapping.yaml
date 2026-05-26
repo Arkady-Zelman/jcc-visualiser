@@ -1,10 +1,163 @@
 # grade_hs_mapping — curated lookup from (HS code, origin country) → grade(s) and weights.
 # This is the editorial layer that bridges Japan Customs's HS-code-only data to named grades.
-# Loaded by `python -m ingest.seed` into the `grade_hs_mapping` table at Milestone 2.
+# Loaded by `python -m ingest.seed` into the `grade_hs_mapping` table.
 # Schema: see BUILD_SPEC.md §5 (grade_hs_mapping table) and §7.3 (derivation).
+#
+# IMPORTANT — this is a best-effort initial pass. It is the bottleneck for /composition
+# accuracy. Refinements are expected as we cross-check against Vortexa cargo flows, Saudi
+# Aramco / ADNOC published volume disclosures, JOGMEC data, and direct trader knowledge.
+# Re-running `python -m ingest.derive_composition` re-derives history from any edits here.
+#
+# Scope:
+#   - We map only HS 2709.00.900 ("crude petroleum oils, other") in v1.
+#   - HS 2709.00.100 (condensate) is excluded — Japanese imports of condensate (mainly QA, AE,
+#     AU origins) are a smaller volume stream and not the focus of v1.
+#   - HS 2710.19.xxx (refined products) is excluded — these are not crude.
+#   - Weights within each (hs_code, origin_country, applies_from) tuple should sum to ~100.
+#   - applies_to=null means "open-ended" (current). Set applies_to to introduce a new window.
 
-# Each entry maps a (hs_code, origin_country) tuple to one or more grades with weights summing to 100.
-# applies_from / applies_to define the validity window (so e.g. UAE crude composition can shift over time).
+mappings:
+  # ===========================================================
+  # UAE (AE) — Murban dominant, Das and Upper Zakum significant
+  # ===========================================================
+  - hs_code: '2709.00.900'
+    origin_country: AE
+    grade_id: murban
+    weight_pct: 50.0
+    applies_from: '2015-01-01'
+    applies_to: '2021-03-01'
+    notes: Pre-ICE Murban-futures era. Approximate share of ADNOC exports to Japan.
+  - hs_code: '2709.00.900'
+    origin_country: AE
+    grade_id: das
+    weight_pct: 20.0
+    applies_from: '2015-01-01'
+    applies_to: '2021-03-01'
+  - hs_code: '2709.00.900'
+    origin_country: AE
+    grade_id: upper_zakum
+    weight_pct: 30.0
+    applies_from: '2015-01-01'
+    applies_to: '2021-03-01'
+  # Post-Murban-futures (2021-03-29 launch) — Murban share grows
+  - hs_code: '2709.00.900'
+    origin_country: AE
+    grade_id: murban
+    weight_pct: 60.0
+    applies_from: '2021-03-01'
+    applies_to: null
+  - hs_code: '2709.00.900'
+    origin_country: AE
+    grade_id: das
+    weight_pct: 15.0
+    applies_from: '2021-03-01'
+    applies_to: null
+  - hs_code: '2709.00.900'
+    origin_country: AE
+    grade_id: upper_zakum
+    weight_pct: 25.0
+    applies_from: '2021-03-01'
+    applies_to: null
 
-# M1 placeholder — curated at Milestone 2.
-mappings: []
+  # ===========================================================
+  # Saudi Arabia (SA) — Arab Light backbone, others rotate
+  # ===========================================================
+  - hs_code: '2709.00.900'
+    origin_country: SA
+    grade_id: arab_light
+    weight_pct: 50.0
+    applies_from: '2015-01-01'
+    applies_to: null
+  - hs_code: '2709.00.900'
+    origin_country: SA
+    grade_id: arab_extra_light
+    weight_pct: 20.0
+    applies_from: '2015-01-01'
+    applies_to: null
+  - hs_code: '2709.00.900'
+    origin_country: SA
+    grade_id: arab_medium
+    weight_pct: 15.0
+    applies_from: '2015-01-01'
+    applies_to: null
+  - hs_code: '2709.00.900'
+    origin_country: SA
+    grade_id: arab_heavy
+    weight_pct: 15.0
+    applies_from: '2015-01-01'
+    applies_to: null
+
+  # ===========================================================
+  # Oman (OM) — single grade
+  # ===========================================================
+  - hs_code: '2709.00.900'
+    origin_country: OM
+    grade_id: oman
+    weight_pct: 100.0
+    applies_from: '2015-01-01'
+    applies_to: null
+
+  # ===========================================================
+  # Kuwait (KW) — Kuwait Export Blend, approximated as Arab Medium-like
+  # ===========================================================
+  - hs_code: '2709.00.900'
+    origin_country: KW
+    grade_id: arab_medium
+    weight_pct: 100.0
+    applies_from: '2015-01-01'
+    applies_to: null
+    notes: |
+      Kuwait Export Blend is technically a distinct grade (~31 API, ~2.5% S), but we proxy
+      it via Arab Medium for v1 — same medium-sour cluster, same OSP-vs-Oman/Dubai pricing.
+      A dedicated `kuwait_export` grade is a follow-up.
+
+  # ===========================================================
+  # Qatar (QA) — Qatar Marine / Qatar Land, proxy via Dubai
+  # ===========================================================
+  - hs_code: '2709.00.900'
+    origin_country: QA
+    grade_id: dubai
+    weight_pct: 100.0
+    applies_from: '2015-01-01'
+    applies_to: null
+    notes: |
+      Qatar Marine and Qatar Land are not yet first-class grades in this dataset; proxied
+      via 'dubai' for the price line. Volume is small. Dedicated grades are a follow-up.
+
+  # ===========================================================
+  # Russia (RU) — ESPO + Sakhalin blended into one bucket
+  # ===========================================================
+  - hs_code: '2709.00.900'
+    origin_country: RU
+    grade_id: espo
+    weight_pct: 100.0
+    applies_from: '2015-01-01'
+    applies_to: null
+
+  # ===========================================================
+  # United States (US) — treat all as WTI/US Gulf basket
+  # ===========================================================
+  - hs_code: '2709.00.900'
+    origin_country: US
+    grade_id: wti
+    weight_pct: 100.0
+    applies_from: '2016-01-01'   # US crude export ban lifted Dec 2015
+    applies_to: null
+
+  # ===========================================================
+  # Iran (IR) — Iranian Heavy / Light, proxy via Arab Heavy
+  # ===========================================================
+  # No mapping for IR.
+  # Iranian Heavy and Light were significant pre-2018; sanctions snapback (2018-05-08)
+  # cut Japanese imports to zero. We deliberately do NOT proxy Iran to another grade,
+  # because the *whole point* of /composition is to show Iran share collapsing. Origin=IR
+  # rows in imports_monthly will land in the synthetic `unmapped_IR` bucket — which is
+  # exactly the visible signal we want at M4.
+
+  # ===========================================================
+  # Other origins (Mexico, Australia, Brazil, Africa, etc.)
+  # ===========================================================
+  # Intentionally unmapped in v1. derive_composition will assign them to
+  # synthetic `unmapped_<country>` grades, which surface as a visible "Other" band
+  # in /composition. Operator can promote any of them to a first-class grade by
+  # adding a real grade entry and a mapping here.
