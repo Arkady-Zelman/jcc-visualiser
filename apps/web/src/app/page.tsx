@@ -57,7 +57,7 @@ export default async function Home() {
         </Card>
       )}
 
-      <section className="grid gap-4 sm:grid-cols-2">
+      <section className="grid gap-4 sm:grid-cols-3">
         <SurfaceCard
           href="/composition"
           title="Composition"
@@ -67,6 +67,11 @@ export default async function Home() {
           href="/grades"
           title="Grades"
           description="Every grade in the basket — price history, share-over-time, specs, and the events that mattered."
+        />
+        <SurfaceCard
+          href="/curve"
+          title="Curve"
+          description="How JCC moves: 14 years of history, a regression against Brent + WTI, and the structural ~4-month lag from physical to LNG settled."
         />
       </section>
 

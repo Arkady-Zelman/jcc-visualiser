@@ -47,6 +47,14 @@ function TopNav() {
               Grades
             </Link>
           </li>
+          <li>
+            <Link
+              href="/curve"
+              className="transition-colors hover:text-zinc-950 dark:hover:text-zinc-50"
+            >
+              Curve
+            </Link>
+          </li>
         </ul>
       </nav>
     </header>

@@ -4,13 +4,14 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ## Status
 
-**Milestone 4 shipped.** `/composition`, `/grades`, `/grades/[gradeId]` are live and renderable from the production build. All M4 acceptance signals verified (Iran 2018 collapse, Russia 2022 decline, Arab Light + Murban dominating the latest stack, WTI full price line, Murban gracefully degraded). Next step: execute Milestone 5 (forward curve view) — needs a scope conversation up front because CME JCC futures aren't free (M3 finding); fallback is EIA WTI forward curve as a stand-in.
+**Milestone 5 shipped.** `/curve` is live as "How the JCC price moves" — JCC historical chart with event annotations, lag-aware JCC ~ Brent + WTI regression (R² = 0.964 with 2-month structural lag), implied next-month JCC forecast, 5-stage lag diagram, and a documented placeholder for the missing market forward curve. Adapted from the spec's original design after M3 found CME / ICE futures are paywalled.
 
 Done so far:
 - **M1 Scaffold** — Next.js 16 + React 19 + Tailwind v4 + shadcn (base-nova) + Python 3.11 ingest venv.
 - **M2 Database** — 10 tables in Supabase (eu-west-2), 11 grades + 15 HS mappings + 13 events seeded.
 - **M3 Ingest** — PAJ JCC values (171 months), Japan Customs imports (2594 rows), Frankfurter FX + EIA WTI/Brent spot + WTI futures (~30K rows). Composition derived to 3131 rows across 183 months × 54 grades.
 - **M4 Composition + Grades + Annotations** — 3 routes live, 54 grade detail pages SSG-prerendered.
+- **M5 Curve (adapted)** — `/curve` page with lag-aware regression, historical chart, forecast card, lag diagram, forward-curve placeholder.
 
 Deferred to v1.5 (not blocking demo):
 - Daily CME JCC futures, Dubai, Oman, Murban — paywalled feeds.
