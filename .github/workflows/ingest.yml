@@ -1,0 +1,111 @@
+name: Ingest
+
+# Schedules below mirror apps/web/vercel.json. The Next.js cron routes are
+# acknowledge-only stubs; the real ingest runs here on GitHub-hosted runners
+# because Vercel function timeouts (60s Hobby) don't fit the multi-minute
+# backfills, and because GitHub Actions can import `apps/ingest/` directly
+# without code duplication.
+#
+# Required GitHub Secrets:
+#   SUPABASE_URL                 — https://<project-ref>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY    — sb_secret_... (service-role)
+#   SUPABASE_PASSWORD            — DB password (used by advisory_lock + apply_migration)
+#   ESTAT_APP_ID                 — e-stat.go.jp/api/en application id
+#   EIA_API_KEY                  — eia.gov/opendata API key
+#   SENTRY_DSN                   — (optional) Sentry Python DSN
+
+on:
+  schedule:
+    # PAJ monthly: 8th of month at 09:00 UTC
+    - cron: "0 9 8 * *"
+    # Customs monthly: 8th of month at 09:30 UTC
+    - cron: "30 9 8 * *"
+    # Benchmarks daily: 06:00 UTC
+    - cron: "0 6 * * *"
+    # JCC futures (stub) daily: 22:00 UTC
+    - cron: "0 22 * * *"
+  # Allow manual triggering for backfills + ad-hoc runs.
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Which job to run (paj | customs | benchmarks | jcc_futures | derive_composition | all)"
+        required: true
+        default: "all"
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      SUPABASE_PASSWORD: ${{ secrets.SUPABASE_PASSWORD }}
+      ESTAT_APP_ID: ${{ secrets.ESTAT_APP_ID }}
+      EIA_API_KEY: ${{ secrets.EIA_API_KEY }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: apps/ingest/pyproject.toml
+
+      - name: Install ingest package
+        working-directory: apps/ingest
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Run job(s)
+        working-directory: apps/ingest
+        run: |
+          set -euo pipefail
+          # Decide which job(s) to run.
+          case "${{ github.event_name }}" in
+            workflow_dispatch)
+              JOB="${{ inputs.job }}"
+              ;;
+            schedule)
+              # Map cron schedule -> job. github.event.schedule is the cron string that fired.
+              case "${{ github.event.schedule }}" in
+                "0 9 8 * *")    JOB="paj" ;;
+                "30 9 8 * *")   JOB="customs_then_derive" ;;
+                "0 6 * * *")    JOB="benchmarks" ;;
+                "0 22 * * *")   JOB="jcc_futures" ;;
+                *)              JOB="all" ;;
+              esac
+              ;;
+            *) JOB="all" ;;
+          esac
+          echo "Running JOB=$JOB"
+
+          run_one() {
+            echo "::group::ingest.$1"
+            python -m "ingest.$1"
+            echo "::endgroup::"
+          }
+
+          case "$JOB" in
+            paj)                run_one paj ;;
+            customs)            run_one customs ;;
+            customs_then_derive)
+              run_one customs
+              run_one derive_composition
+              ;;
+            benchmarks)         run_one benchmarks ;;
+            jcc_futures)        run_one jcc_futures ;;
+            derive_composition) run_one derive_composition ;;
+            all)
+              run_one paj
+              run_one customs
+              run_one benchmarks
+              run_one jcc_futures
+              run_one derive_composition
+              ;;
+            *)
+              echo "Unknown job: $JOB" >&2
+              exit 1
+              ;;
+          esac

@@ -11,6 +11,9 @@ dependencies = [
   "supabase>=2.5",
   "tenacity>=8.2",
   "sentry-sdk>=2.0",
+  "pandas>=2.2",
+  "beautifulsoup4>=4.12",
+  "lxml>=5.0",
 ]
 
 [project.optional-dependencies]
