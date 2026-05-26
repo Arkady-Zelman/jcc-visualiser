@@ -28,8 +28,8 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
-def _load_all(client, table: str, columns: str, chunk: int = 10000) -> list[dict[str, Any]]:
-    """Page through a Supabase table — PostgREST default cap is 1000 rows per request."""
+def _load_all(client, table: str, columns: str, chunk: int = 1000) -> list[dict[str, Any]]:
+    """Page through a Supabase table. PostgREST caps single requests at 1000 rows."""
     out: list[dict[str, Any]] = []
     start = 0
     while True:
@@ -41,8 +41,6 @@ def _load_all(client, table: str, columns: str, chunk: int = 10000) -> list[dict
             .execute()
         )
         rows = resp.data or []
-        if not rows:
-            break
         out.extend(rows)
         if len(rows) < chunk:
             break

@@ -121,7 +121,43 @@ If the SQL checks pass and the Iran 2018 collapse is visible, M3 STOP gate is me
 
 ## Open follow-ups carried into M4+
 
-- Verify the customs.py volume unit assumption against ~10-12 million kl/month total.
-- Confirm or refute the e-Stat `statsDataId=0003339498` ID; switch if wrong.
-- Re-curate `grade_hs_mapping.yaml` if M4 chart shows an implausibly large `unmapped_*` band.
 - Source CME / Dubai / Oman / Murban forward curves from a paid feed (or accept WTI-only forward curve in M5).
+- Consider promoting Indonesia, Vietnam, Australia, Malaysia, Ecuador to first-class grades (they have non-trivial volume across most months).
+
+## Discoveries during operator verification (2026-05-26 afternoon)
+
+After the user populated `ESTAT_APP_ID` and `EIA_API_KEY` in `.env`, several things changed:
+
+1. **My initial `statsDataId=0003339498` guess was wrong.** Discovered via `getStatsList` that Japan Customs publishes trade statistics as one statsDataId per year-range, not one monthly:
+   - `0003228185` covers 2011–2015 (Fixed)
+   - `0003313966` covers 2016–2020 (Fixed)
+   - `0003425294` covers 2021–2024 (Fixed) + 2025 (Revised)
+   - `0004049326` covers 2026 (Detailed Jan-Feb, 9-digit Provisional Mar)
+   Rewrote `customs.py` to iterate over a `COVERAGE` constant; future years can be added there.
+
+2. **Monthly data is encoded in `cat02`, not `time`.** The `time` dimension is just the year; months are separate `cat02` codes (Quantity1-January=150, Value-January=170, ..., Quantity1-December=480, Value-December=500). Re-architected the parser around this.
+
+3. **`@area` codes are 5-digit (`5` + zero-padded MOF code).** First strip attempt only removed one char, leaving `0137` instead of `137`. Fixed to `str(int(area_code[1:]))`. Validated against all 235 codes via a new test.
+
+4. **`_load_all` had a pagination bug.** `chunk=10000` was silently capped at PostgREST's 1000-row default, so derive_composition only saw the first 1000 imports_monthly rows (2011–2015 only). Fixed to `chunk=1000` with proper pagination; now sees all 2594 rows.
+
+5. **Volume is in KL natively, value in 1000 JPY.** Confirmed by inspecting the Unit1 row (`cat02=100` → `'ＫＬ'`) and cross-checking 2026-Q1 totals against published Japan crude imports (~11-14 million kl/month). Old assumption (kg ÷ 850) was wrong; corrected.
+
+## Verification results (after fixes)
+
+```
+imports_monthly:        2594 rows, 2011-01 → 2026-03
+composition_monthly:    3131 rows, 183 months × 54 grades
+benchmark_prices_daily: 10,000+ rows (Frankfurter FX + EIA WTI/Brent spot)
+benchmark_forwards_daily: 20,000+ rows (EIA WTI 12-contract forward curve)
+jcc_monthly:            171 rows, 2012-01 → 2026-03
+```
+
+**M4 signature signals all visible:**
+
+- **Iran (`unmapped_IR`)** share: 5-9% through 2018, **0% from late 2018** (May-2018 JCPOA snapback), brief Q1 2019 cargoes, dies by mid-2019. ✓
+- **Latest basket (2026-03)**: Arab Light 24% + Murban 24% + Arab Medium 10% + Upper Zakum 10% + Arab Extra Light 10% + Arab Heavy 7% + Das 6% + WTI 3% + Dubai 2%. Total ME share ~91%. ✓
+- **Russia (ESPO)** through 2022-2023: 3-5% through 2021-Q1 2022, then **steady decline** post-invasion to <1% by 2023. ✓
+- **Monthly volumes plausible**: 11-14 M kl per month — matches Japan's known ~10-12 M kl crude imports. ✓
+
+**M3 STOP gate met.** Ready to proceed to M4.

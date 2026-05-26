@@ -1,66 +1,47 @@
-"""Unit tests for customs.py parser against a synthetic e-Stat payload.
-
-(Real e-Stat ingest requires ESTAT_APP_ID; this test verifies the parser logic
-in isolation.)
-"""
+"""Unit tests for customs.py parser logic."""
 
 from __future__ import annotations
 
-import json
-from datetime import date
-from pathlib import Path
-
-from ingest.customs import ImportsRow, load_mof_to_iso, months_to_backfill, parse_estat_payload
-
-FIXTURE = Path(__file__).parent / "fixtures" / "customs" / "estat_payload_synthetic.json"
+from ingest.customs import _MONTH_OFFSETS, _strip_area_prefix, load_mof_to_iso
 
 
-def test_parser_extracts_known_origins() -> None:
-    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+def test_strip_area_prefix_normalises_to_3_digit_mof() -> None:
+    """e-Stat prefixes the 3-digit MOF code with '5' + a zero-pad digit."""
+    assert _strip_area_prefix("50137") == "137"  # Saudi Arabia
+    assert _strip_area_prefix("50105") == "105"  # China
+    assert _strip_area_prefix("50103") == "103"  # Korea
+    assert _strip_area_prefix("50224") == "224"  # Russia
+    assert _strip_area_prefix("50304") == "304"  # USA
+    # Non-prefixed codes pass through unchanged.
+    assert _strip_area_prefix("137") == "137"
+    assert _strip_area_prefix("abc") == "abc"
+
+
+def test_mof_country_codes_yaml_covers_key_crude_origins() -> None:
     mof_to_iso = load_mof_to_iso()
-    rows, unknown = parse_estat_payload(payload, mof_to_iso)
-
-    # 6 origins in the fixture; 1 (`999`) is unknown.
-    assert len(rows) == 5, f"expected 5 known-origin rows, got {len(rows)}"
-    assert unknown == ["999"], f"expected ['999'] unknown; got {unknown}"
-
-    by_iso = {r["origin_country"]: r for r in rows}
-    # UAE (147) → AE
-    assert "AE" in by_iso
-    # Saudi (137) → SA
-    assert "SA" in by_iso
-    # Oman (141) → OM
-    assert "OM" in by_iso
-    # Russia (224) → RU
-    assert "RU" in by_iso
-    # US (304) → US
-    assert "US" in by_iso
+    for mof_code, expected_iso in [
+        ("133", "IR"),
+        ("134", "IQ"),
+        ("137", "SA"),
+        ("138", "KW"),
+        ("140", "QA"),
+        ("141", "OM"),
+        ("147", "AE"),
+        ("224", "RU"),
+        ("304", "US"),
+    ]:
+        assert mof_to_iso.get(mof_code) == expected_iso, (
+            f"MOF {mof_code} should map to {expected_iso}, got {mof_to_iso.get(mof_code)}"
+        )
 
 
-def test_pydantic_round_trip() -> None:
-    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
-    mof_to_iso = load_mof_to_iso()
-    rows, _ = parse_estat_payload(payload, mof_to_iso)
-    for raw in rows:
-        model = ImportsRow.model_validate(raw)
-        assert model.month == date(2026, 4, 1)
-        assert model.hs_code == "2709.00.900"
-        assert model.volume_kl > 0
-        assert model.value_jpy > 0
-
-
-def test_months_to_backfill_from_empty() -> None:
-    months = months_to_backfill(None)
-    assert months[0] == "201501"
-    # Last month should be < current month
-    from datetime import datetime, timezone
-
-    today = datetime.now(timezone.utc).date()
-    last = months[-1]
-    last_year, last_month = int(last[:4]), int(last[4:6])
-    assert (last_year, last_month) < (today.year, today.month)
-
-
-def test_months_to_backfill_resumes_after_latest() -> None:
-    months = months_to_backfill(date(2026, 2, 1))
-    assert months[0] == "202603"  # the next month after 2026-02
+def test_month_offsets_cover_all_12_months() -> None:
+    """Every month (Jan-Dec) must have both a quantity and a value cat02 code."""
+    months_seen: dict[int, set[str]] = {}
+    for cat02, (kind, month) in _MONTH_OFFSETS.items():
+        months_seen.setdefault(month, set()).add(kind)
+    for m in range(1, 13):
+        assert m in months_seen, f"month {m} missing from _MONTH_OFFSETS"
+        assert months_seen[m] == {"qty", "value"}, (
+            f"month {m} should have both qty and value; got {months_seen[m]}"
+        )
