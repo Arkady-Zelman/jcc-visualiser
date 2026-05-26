@@ -1,0 +1,101 @@
+import { Suspense } from "react";
+
+import { CompositionView } from "@/components/composition/composition-view";
+import { createClient, fetchAll } from "@/lib/supabase/server";
+import {
+  pivotToChart,
+  type CompositionRow,
+  type EventRow,
+  type GradeRow,
+  type ViewMode,
+} from "@/lib/composition";
+
+export const revalidate = 86400; // composition is monthly — refresh daily
+
+interface PageProps {
+  searchParams: Promise<{ view?: string }>;
+}
+
+export default async function CompositionPage({ searchParams }: PageProps) {
+  const { view } = await searchParams;
+  const initialView: ViewMode = view === "origin" || view === "region" ? view : "grade";
+
+  const supabase = createClient();
+
+  const [composition, grades, events, jccLatestResp] = await Promise.all([
+    fetchAll<CompositionRow>(() =>
+      supabase
+        .from("composition_monthly")
+        .select("month, grade_id, share_pct, volume_kl, value_jpy, source, ingested_at")
+        .order("month", { ascending: true }),
+    ),
+    fetchAll<GradeRow>(() =>
+      supabase
+        .from("grades")
+        .select("*")
+        .order("id"),
+    ),
+    fetchAll<EventRow>(() =>
+      supabase
+        .from("events")
+        .select("*")
+        .order("date_from", { ascending: true }),
+    ),
+    supabase
+      .from("jcc_monthly")
+      .select("month, jcc_value_jpy_per_kl, jcc_value_usd_per_bbl, status")
+      .order("month", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const jccLatest = jccLatestResp.data;
+
+  // Pre-compute all three pivots server-side so the Client Component swaps view-mode
+  // without recomputing in the browser.
+  const pivotedByMode = {
+    grade: pivotToChart(composition, grades, "grade"),
+    origin: pivotToChart(composition, grades, "origin"),
+    region: pivotToChart(composition, grades, "region"),
+  };
+
+  return (
+    <div className="mx-auto w-full max-w-6xl px-6 py-8">
+      <header className="mb-6 space-y-2">
+        <p className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+          Composition
+        </p>
+        <h1 className="text-3xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+          What's in the JCC basket
+        </h1>
+        <p className="max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+          The Japan Crude Cocktail is the volume-weighted CIF average price of every
+          drop of crude that clears Japanese customs each month. This view shows how
+          the basket composition has evolved.
+        </p>
+        {jccLatest && (
+          <div className="mt-3 flex items-center gap-2 text-sm">
+            <span className="rounded-full bg-zinc-900 px-3 py-1 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-950">
+              Latest JCC ({jccLatest.month}):
+              {" "}¥{jccLatest.jcc_value_jpy_per_kl?.toLocaleString()}/kl
+              {jccLatest.jcc_value_usd_per_bbl
+                ? ` · $${jccLatest.jcc_value_usd_per_bbl.toFixed(2)}/bbl`
+                : ""}
+            </span>
+            <span className="rounded-full border border-zinc-300 px-3 py-1 text-xs uppercase tracking-wide text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
+              {jccLatest.status}
+            </span>
+          </div>
+        )}
+      </header>
+
+      <Suspense>
+        <CompositionView
+          pivotedByMode={pivotedByMode}
+          events={events}
+          initialView={initialView}
+        />
+      </Suspense>
+    </div>
+  );
+}

@@ -52,9 +52,11 @@ yarn-error.log*
 # testing
 coverage/
 
-# supabase local dev
-supabase/.branches
-supabase/.temp
+# supabase local dev / CLI cache (anywhere in the tree)
+**/.supabase/
+**/supabase/.branches/
+**/supabase/.temp/
 
-# generated types
-apps/web/src/types/db.ts
+# generated types are tracked so CI / fresh clones can typecheck without
+# Supabase access — re-generate via `npm run gen:types` after schema changes.
+# (was previously gitignored; un-gitignored at M4)

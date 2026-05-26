@@ -4,7 +4,19 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ## Status
 
-**Pre-Milestone 1.** `BUILD_SPEC.md` and `CLAUDE.md` drafted. Repo otherwise empty. Next step: execute Milestone 1 (scaffold).
+**Milestone 4 shipped.** `/composition`, `/grades`, `/grades/[gradeId]` are live and renderable from the production build. All M4 acceptance signals verified (Iran 2018 collapse, Russia 2022 decline, Arab Light + Murban dominating the latest stack, WTI full price line, Murban gracefully degraded). Next step: execute Milestone 5 (forward curve view) — needs a scope conversation up front because CME JCC futures aren't free (M3 finding); fallback is EIA WTI forward curve as a stand-in.
+
+Done so far:
+- **M1 Scaffold** — Next.js 16 + React 19 + Tailwind v4 + shadcn (base-nova) + Python 3.11 ingest venv.
+- **M2 Database** — 10 tables in Supabase (eu-west-2), 11 grades + 15 HS mappings + 13 events seeded.
+- **M3 Ingest** — PAJ JCC values (171 months), Japan Customs imports (2594 rows), Frankfurter FX + EIA WTI/Brent spot + WTI futures (~30K rows). Composition derived to 3131 rows across 183 months × 54 grades.
+- **M4 Composition + Grades + Annotations** — 3 routes live, 54 grade detail pages SSG-prerendered.
+
+Deferred to v1.5 (not blocking demo):
+- Daily CME JCC futures, Dubai, Oman, Murban — paywalled feeds.
+- ESPO daily price — Argus-paywalled.
+- Arab OSP monthly proxies — needs Aramco press-release scraper.
+- Sentry source-map upload (`withSentryConfig`).
 
 **Read `BUILD_SPEC.md` end-to-end before writing any code** — it is the source of truth for schema, sources, units, surfaces, and milestone gating. The spec is non-negotiable on schema, units, and grade-mapping decisions; minor naming and structure choices may be decided locally.
 
