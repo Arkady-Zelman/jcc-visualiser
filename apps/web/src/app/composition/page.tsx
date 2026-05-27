@@ -9,7 +9,13 @@ import {
   type GradeRow,
   type ViewMode,
 } from "@/lib/composition";
-import { MIN_DATA_MONTH } from "@/lib/constants";
+import { MIN_DATA_DATE, MIN_DATA_MONTH } from "@/lib/constants";
+import {
+  alignSeries,
+  monthlyAverages,
+  type BenchmarkPriceRow,
+  type JccRow,
+} from "@/lib/curve";
 
 export const revalidate = 86400; // composition is monthly — refresh daily
 
@@ -23,7 +29,7 @@ export default async function CompositionPage({ searchParams }: PageProps) {
 
   const supabase = createClient();
 
-  const [composition, grades, events, jccLatestResp] = await Promise.all([
+  const [composition, grades, events, jccLatestResp, jcc, wtiDaily, brentDaily] = await Promise.all([
     fetchAll<CompositionRow>(() =>
       supabase
         .from("composition_monthly")
@@ -50,9 +56,36 @@ export default async function CompositionPage({ searchParams }: PageProps) {
       .order("month", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    fetchAll<JccRow>(() =>
+      supabase
+        .from("jcc_monthly")
+        .select("*")
+        .gte("month", MIN_DATA_MONTH)
+        .order("month"),
+    ),
+    fetchAll<BenchmarkPriceRow>(() =>
+      supabase
+        .from("benchmark_prices_daily")
+        .select("*")
+        .eq("benchmark", "wti")
+        .gte("date", MIN_DATA_DATE)
+        .order("date"),
+    ),
+    fetchAll<BenchmarkPriceRow>(() =>
+      supabase
+        .from("benchmark_prices_daily")
+        .select("*")
+        .eq("benchmark", "brent")
+        .gte("date", MIN_DATA_DATE)
+        .order("date"),
+    ),
   ]);
 
   const jccLatest = jccLatestResp.data;
+
+  // Build the same `aligned` shape `/curve` uses so we can render JccHistoryChart
+  // below the area chart with identical data semantics + cross-hover sync.
+  const aligned = alignSeries(jcc, monthlyAverages(brentDaily), monthlyAverages(wtiDaily));
 
   // Pre-compute all three pivots server-side so the Client Component swaps view-mode
   // without recomputing in the browser.
@@ -103,6 +136,7 @@ export default async function CompositionPage({ searchParams }: PageProps) {
             pivotedByMode={pivotedByMode}
             events={events}
             initialView={initialView}
+            aligned={aligned}
           />
         </Suspense>
       )}

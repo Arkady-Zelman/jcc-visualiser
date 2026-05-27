@@ -26,7 +26,24 @@ type Unit = "jpy" | "usd";
 
 interface Props {
   aligned: AlignedRow[];
-  events: EventRow[];
+  events?: EventRow[];
+  /**
+   * `compact = true` hides the embedded event sidebar and renders the chart
+   * full-width. Used on `/composition` where the page already provides an
+   * event sidebar. Defaults to `false` (full layout used on `/curve`).
+   */
+  compact?: boolean;
+  /**
+   * Recharts `syncId` — pass the same value to multiple charts on a page and
+   * Recharts will sync their tooltip / active dot on hover.
+   */
+  syncId?: string;
+  /**
+   * Optional external month marker (e.g. driven by an event hover lifted to
+   * the parent). Drawn as a dashed reference line at that month.
+   */
+  externalReferenceMonth?: string | null;
+  externalReferenceLabel?: string | null;
 }
 
 const TICK_STYLE = { fontSize: 11, fill: "currentColor" };
@@ -42,13 +59,20 @@ const CATEGORY_BADGE: Record<string, string> = {
   policy: "bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-200",
 };
 
-export function JccHistoryChart({ aligned, events }: Props) {
+export function JccHistoryChart({
+  aligned,
+  events = [],
+  compact = false,
+  syncId,
+  externalReferenceMonth,
+  externalReferenceLabel,
+}: Props) {
   const [unit, setUnit] = useState<Unit>("usd");
   const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
 
-  // Sort events ascending.
+  // Sort events most-recent first (matches the /composition sidebar pattern).
   const sortedEvents = useMemo(
-    () => [...events].sort((a, b) => a.date_from.localeCompare(b.date_from)),
+    () => [...events].sort((a, b) => b.date_from.localeCompare(a.date_from)),
     [events],
   );
 
@@ -64,93 +88,120 @@ export function JccHistoryChart({ aligned, events }: Props) {
     [aligned, unit],
   );
 
-  // ReferenceLine matches by string equality on the x-axis key. We snap each
-  // event's date_from to the closest month in our data series.
-  const referenceMonth = useMemo(() => {
-    if (!hoveredEvent) return null;
-    const eventMonth = hoveredEvent.date_from.slice(0, 7) + "-01";
-    return data.find((r) => r.month === eventMonth)?.month ?? null;
-  }, [hoveredEvent, data]);
+  // Decide which reference month to draw (internal sidebar hover wins over external).
+  const refMonth = useMemo(() => {
+    const candidate =
+      (hoveredEvent ? hoveredEvent.date_from.slice(0, 7) + "-01" : null) ??
+      externalReferenceMonth ??
+      null;
+    if (!candidate) return null;
+    return data.find((r) => r.month === candidate)?.month ?? null;
+  }, [hoveredEvent, externalReferenceMonth, data]);
+  const refLabel = hoveredEvent?.title ?? externalReferenceLabel ?? null;
 
   const yearTickFormatter = (m: string) => (m.endsWith("-01-01") ? m.slice(0, 4) : "");
   const yFormatter = unit === "usd" ? (v: number) => `$${v.toFixed(0)}` : (v: number) => `¥${Math.round(v / 1000)}k`;
 
+  const chart = (
+    <div className="text-zinc-700 dark:text-zinc-300">
+      <ResponsiveContainer width="100%" height={360}>
+        <LineChart
+          data={data}
+          syncId={syncId}
+          syncMethod="value"
+          margin={{ top: 10, right: 12, left: 0, bottom: 8 }}
+        >
+          <CartesianGrid stroke="currentColor" strokeOpacity={0.08} vertical={false} />
+          <XAxis
+            dataKey="month"
+            tickFormatter={yearTickFormatter}
+            tick={TICK_STYLE}
+            interval={0}
+            minTickGap={28}
+          />
+          <YAxis
+            tickFormatter={yFormatter}
+            domain={["auto", "auto"]}
+            tick={TICK_STYLE}
+            width={56}
+          />
+          <Tooltip
+            contentStyle={{
+              fontSize: 12,
+              border: "1px solid var(--border, #d4d4d8)",
+              borderRadius: 6,
+              padding: "6px 10px",
+              backgroundColor: "var(--popover, #fff)",
+            }}
+            formatter={(v) => {
+              const n = Number(v);
+              return unit === "usd"
+                ? [`$${n.toFixed(2)}/bbl`, "JCC"]
+                : [`¥${n.toLocaleString()}/kl`, "JCC"];
+            }}
+            labelFormatter={(l) => String(l).slice(0, 7)}
+          />
+          <Line
+            type="monotone"
+            dataKey="value"
+            stroke="#1f2937"
+            strokeWidth={1.6}
+            dot={false}
+            isAnimationActive={false}
+            className="dark:[&_path]:stroke-zinc-200"
+          />
+          {refMonth && (
+            <ReferenceLine
+              x={refMonth}
+              stroke="#dc2626"
+              strokeWidth={1.5}
+              strokeDasharray="4 4"
+            >
+              {refLabel ? (
+                <Label
+                  value={refLabel}
+                  position="insideTopRight"
+                  fill="#dc2626"
+                  fontSize={11}
+                  offset={8}
+                />
+              ) : null}
+            </ReferenceLine>
+          )}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
+
+  const header = (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <Tabs value={unit} onValueChange={(v) => setUnit(v as Unit)}>
+        <TabsList>
+          <TabsTrigger value="usd">USD / bbl</TabsTrigger>
+          <TabsTrigger value="jpy">¥ / kl</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      <p className="text-xs text-zinc-500 dark:text-zinc-400">
+        {aligned.length} months
+        {!compact && events.length > 0 ? " · hover an event below to mark the chart" : ""}
+      </p>
+    </div>
+  );
+
+  if (compact) {
+    return (
+      <div className="space-y-3">
+        {header}
+        {chart}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={unit} onValueChange={(v) => setUnit(v as Unit)}>
-          <TabsList>
-            <TabsTrigger value="usd">USD / bbl</TabsTrigger>
-            <TabsTrigger value="jpy">¥ / kl</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">
-          {aligned.length} months · hover an event below to mark the chart
-        </p>
-      </div>
-
+      {header}
       <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-        <div className="text-zinc-700 dark:text-zinc-300">
-          <ResponsiveContainer width="100%" height={360}>
-            <LineChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: 8 }}>
-              <CartesianGrid stroke="currentColor" strokeOpacity={0.08} vertical={false} />
-              <XAxis
-                dataKey="month"
-                tickFormatter={yearTickFormatter}
-                tick={TICK_STYLE}
-                interval={0}
-                minTickGap={28}
-              />
-              <YAxis
-                tickFormatter={yFormatter}
-                domain={["auto", "auto"]}
-                tick={TICK_STYLE}
-                width={56}
-              />
-              <Tooltip
-                contentStyle={{
-                  fontSize: 12,
-                  border: "1px solid var(--border, #d4d4d8)",
-                  borderRadius: 6,
-                  padding: "6px 10px",
-                  backgroundColor: "var(--popover, #fff)",
-                }}
-                formatter={(v) => {
-                  const n = Number(v);
-                  return unit === "usd"
-                    ? [`$${n.toFixed(2)}/bbl`, "JCC"]
-                    : [`¥${n.toLocaleString()}/kl`, "JCC"];
-                }}
-                labelFormatter={(l) => String(l).slice(0, 7)}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#1f2937"
-                strokeWidth={1.6}
-                dot={false}
-                isAnimationActive={false}
-                className="dark:[&_path]:stroke-zinc-200"
-              />
-              {referenceMonth && hoveredEvent && (
-                <ReferenceLine
-                  x={referenceMonth}
-                  stroke="#dc2626"
-                  strokeWidth={1.5}
-                  strokeDasharray="4 4"
-                >
-                  <Label
-                    value={hoveredEvent.title}
-                    position="insideTopRight"
-                    fill="#dc2626"
-                    fontSize={11}
-                    offset={8}
-                  />
-                </ReferenceLine>
-              )}
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        {chart}
 
         <aside className="rounded-lg border border-zinc-200 dark:border-zinc-800">
           <div className="border-b border-zinc-200 px-3 py-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">

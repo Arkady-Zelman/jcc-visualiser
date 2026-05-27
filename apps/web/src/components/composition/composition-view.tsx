@@ -7,15 +7,22 @@ import { CompositionTreemap } from "@/components/charts/composition-treemap";
 import { DateScrubber } from "@/components/composition/date-scrubber";
 import { ViewModeToggle } from "@/components/composition/view-mode-toggle";
 import { EventTimelineSidebar } from "@/components/events/event-timeline-sidebar";
+import { JccHistoryChart } from "@/components/curve/jcc-history-chart";
 import { snapshotForMonth, type EventRow, type PivotResult, type ViewMode } from "@/lib/composition";
+import type { AlignedRow } from "@/lib/curve";
 
 interface Props {
   pivotedByMode: Record<ViewMode, PivotResult>;
   events: EventRow[];
   initialView: ViewMode;
+  aligned: AlignedRow[];
 }
 
-export function CompositionView({ pivotedByMode, events, initialView }: Props) {
+// Shared sync key for the area chart and JCC line chart — Recharts cross-hovers
+// any chart pair that shares this id, matching by x-value (month).
+const TIME_SYNC_ID = "composition-time";
+
+export function CompositionView({ pivotedByMode, events, initialView, aligned }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>(initialView);
   const pivoted = pivotedByMode[viewMode];
 
@@ -41,6 +48,8 @@ export function CompositionView({ pivotedByMode, events, initialView }: Props) {
 
   // Event currently hovered → its date_from is what we draw on the chart.
   const hoveredEvent = events.find((e) => e.id === hoveredEventId) ?? null;
+  const eventReferenceMonth = hoveredEvent ? hoveredEvent.date_from : null;
+  const eventReferenceLabel = hoveredEvent?.title ?? null;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
@@ -55,9 +64,10 @@ export function CompositionView({ pivotedByMode, events, initialView }: Props) {
               data={pivoted.rows}
               seriesKeys={pivoted.seriesKeys}
               displayNames={pivoted.displayNames}
-              referenceMonth={hoveredEvent ? hoveredEvent.date_from : monthLabels[monthIndex]}
-              referenceLabel={hoveredEvent?.title}
+              referenceMonth={eventReferenceMonth ?? monthLabels[monthIndex]}
+              referenceLabel={eventReferenceLabel}
               viewMode={viewMode}
+              syncId={TIME_SYNC_ID}
             />
             <DateScrubber
               monthLabels={monthLabels}
@@ -67,6 +77,25 @@ export function CompositionView({ pivotedByMode, events, initialView }: Props) {
             />
           </CardContent>
         </Card>
+
+        {aligned.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base font-medium">
+                JCC price (synced to the chart above)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <JccHistoryChart
+                aligned={aligned}
+                compact
+                syncId={TIME_SYNC_ID}
+                externalReferenceMonth={eventReferenceMonth}
+                externalReferenceLabel={eventReferenceLabel}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>

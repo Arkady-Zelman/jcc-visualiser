@@ -55,8 +55,8 @@ export function CompositionTreemap({ data, viewMode }: Props) {
     );
   }
   return (
-    <div className="h-72">
-      <ResponsiveContainer width="100%" height="100%">
+    <div>
+      <ResponsiveContainer width="100%" height={288}>
         <Treemap
           data={data as unknown as Array<Record<string, unknown>>}
           dataKey="size"

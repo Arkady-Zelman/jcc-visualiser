@@ -25,6 +25,8 @@ interface Props {
   /** Label rendered next to the reference line. */
   referenceLabel?: string | null;
   viewMode: ViewMode;
+  /** Recharts syncId — pass the same value to a sibling chart for cross-hover. */
+  syncId?: string;
 }
 
 const TICK_STYLE = { fontSize: 11, fill: "currentColor" };
@@ -42,6 +44,7 @@ export function CompositionAreaChart({
   referenceMonth,
   referenceLabel,
   viewMode,
+  syncId,
 }: Props) {
   // Tick formatter: show every Jan as a major tick.
   const monthTickFormatter = (m: string) => (m.endsWith("-01-01") ? m.slice(0, 4) : "");
@@ -57,7 +60,12 @@ export function CompositionAreaChart({
   return (
     <div className="text-zinc-700 dark:text-zinc-300">
       <ResponsiveContainer width="100%" height={420}>
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
+        <AreaChart
+          data={data}
+          syncId={syncId}
+          syncMethod="value"
+          margin={{ top: 10, right: 10, left: 0, bottom: 10 }}
+        >
           <CartesianGrid stroke="currentColor" strokeOpacity={0.08} vertical={false} />
           <XAxis
             dataKey="month"
