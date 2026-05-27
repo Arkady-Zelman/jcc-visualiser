@@ -10,6 +10,7 @@ import { ShareSparkline } from "@/components/charts/share-sparkline";
 import { EventCard } from "@/components/events/event-card";
 import { createClient, fetchAll } from "@/lib/supabase/server";
 import type { CompositionRow, EventRow, GradeRow } from "@/lib/composition";
+import { MIN_DATA_DATE, MIN_DATA_MONTH } from "@/lib/constants";
 
 export const revalidate = 3600;
 
@@ -57,6 +58,7 @@ export default async function GradeDetailPage({ params }: PageProps) {
       .from("composition_monthly")
       .select("month, share_pct")
       .eq("grade_id", gradeId)
+      .gte("month", MIN_DATA_MONTH)
       .order("month"),
   );
 
@@ -72,6 +74,7 @@ export default async function GradeDetailPage({ params }: PageProps) {
           .from("benchmark_prices_daily")
           .select("date, price_usd_bbl")
           .eq("benchmark", grade.primary_benchmark!)
+          .gte("date", MIN_DATA_DATE)
           .order("date"),
       )
     : [];
@@ -82,6 +85,7 @@ export default async function GradeDetailPage({ params }: PageProps) {
       .from("events")
       .select("*")
       .contains("impact_grades", [gradeId])
+      .gte("date_from", MIN_DATA_MONTH)
       .order("date_from"),
   );
 

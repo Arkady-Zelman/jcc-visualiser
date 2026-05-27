@@ -17,6 +17,7 @@ import {
 } from "@/lib/curve";
 import { linearRegression, predict } from "@/lib/regression";
 import type { EventRow } from "@/lib/composition";
+import { MIN_DATA_DATE, MIN_DATA_MONTH } from "@/lib/constants";
 
 export const revalidate = 86400;
 
@@ -28,6 +29,7 @@ export default async function CurvePage() {
       supabase
         .from("jcc_monthly")
         .select("*")
+        .gte("month", MIN_DATA_MONTH)
         .order("month"),
     ),
     fetchAll<BenchmarkPriceRow>(() =>
@@ -35,6 +37,7 @@ export default async function CurvePage() {
         .from("benchmark_prices_daily")
         .select("*")
         .eq("benchmark", "wti")
+        .gte("date", MIN_DATA_DATE)
         .order("date"),
     ),
     fetchAll<BenchmarkPriceRow>(() =>
@@ -42,6 +45,7 @@ export default async function CurvePage() {
         .from("benchmark_prices_daily")
         .select("*")
         .eq("benchmark", "brent")
+        .gte("date", MIN_DATA_DATE)
         .order("date"),
     ),
     fetchAll<BenchmarkPriceRow>(() =>
@@ -49,12 +53,14 @@ export default async function CurvePage() {
         .from("benchmark_prices_daily")
         .select("*")
         .eq("benchmark", "jpy_usd_fx")
+        .gte("date", MIN_DATA_DATE)
         .order("date"),
     ),
     fetchAll<EventRow>(() =>
       supabase
         .from("events")
         .select("*")
+        .gte("date_from", MIN_DATA_MONTH)
         .order("date_from"),
     ),
     supabase

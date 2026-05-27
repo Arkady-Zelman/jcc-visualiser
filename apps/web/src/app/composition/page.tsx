@@ -9,6 +9,7 @@ import {
   type GradeRow,
   type ViewMode,
 } from "@/lib/composition";
+import { MIN_DATA_MONTH } from "@/lib/constants";
 
 export const revalidate = 86400; // composition is monthly — refresh daily
 
@@ -27,6 +28,7 @@ export default async function CompositionPage({ searchParams }: PageProps) {
       supabase
         .from("composition_monthly")
         .select("month, grade_id, share_pct, volume_kl, value_jpy, source, ingested_at")
+        .gte("month", MIN_DATA_MONTH)
         .order("month", { ascending: true }),
     ),
     fetchAll<GradeRow>(() =>
@@ -39,6 +41,7 @@ export default async function CompositionPage({ searchParams }: PageProps) {
       supabase
         .from("events")
         .select("*")
+        .gte("date_from", MIN_DATA_MONTH)
         .order("date_from", { ascending: true }),
     ),
     supabase

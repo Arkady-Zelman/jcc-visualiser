@@ -34,7 +34,7 @@ export function EventTimelineSidebar({
   setHoveredEventId,
 }: Props) {
   const sorted = useMemo(
-    () => [...events].sort((a, b) => a.date_from.localeCompare(b.date_from)),
+    () => [...events].sort((a, b) => b.date_from.localeCompare(a.date_from)),
     [events],
   );
 
