@@ -1,5 +1,7 @@
 # JCC Visualiser
 
+[Live Dashboard](https://jcc-visualiser-web.vercel.app/composition)
+
 Research and explanation tool for the Japan Crude Cocktail (JCC) — the volume-weighted CIF average of all crude oil that clears Japanese customs each month (published monthly by the Petroleum Association of Japan from MOF / Customs data).
 
 Four surfaces over one Postgres DB:
@@ -10,17 +12,6 @@ Four surfaces over one Postgres DB:
 - `/` — landing with three surface cards.
 
 See `BUILD_SPEC.md` for the full specification (source of truth) and `CLAUDE.md` for the working agreement with Claude Code.
-
-## Status
-
-**Milestones 1–6 shipped.** Ready to demo.
-
-- M1 Scaffold — Next.js 16 + React 19 + Tailwind v4 + shadcn (base-nova) + Python 3.11 ingest venv.
-- M2 Database — 10 tables in Supabase (`eu-west-2`), 11 grades + 15 HS mappings + 13 events seeded.
-- M3 Ingest — PAJ JCC values, Japan Customs imports, Frankfurter FX + EIA WTI/Brent spot. Composition derived.
-- M4 Composition + Grades + Annotations — three live routes, 54 grade detail pages SSG-prerendered.
-- M5 Curve (adapted) — lag-aware regression replaces the spec's CME-futures decomposition (CME / ICE futures are paywalled).
-- M6 Polish — Sentry source-map upload wired, mobile responsiveness, per-coefficient standard errors + residuals panel, expanded event impact tags, README + walkthrough.
 
 ## Setup
 
@@ -114,6 +105,3 @@ select kind, status, started_at, row_count from compute_runs order by started_at
 ## Milestones
 
 See `BUILD_SPEC.md` §12 for the full milestone plan. Per-milestone session logs in `SESSION_LOG_*.md` capture what was built and what was decided.
-
-- M1–M6 — shipped.
-- v1.5 candidates (not blocking demo): paid feeds (CME / ICE / DME / Argus), Dubai/Oman/Murban historical price series, ESPO daily, Arab OSP scraper, residuals interactive slider, "What-if Brent = $X" forecast slider.
