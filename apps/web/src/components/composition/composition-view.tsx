@@ -1,14 +1,13 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CompositionAreaChart } from "@/components/charts/composition-area-chart";
-import { CompositionTreemap } from "@/components/charts/composition-treemap";
-import { DateScrubber } from "@/components/composition/date-scrubber";
 import { ViewModeToggle } from "@/components/composition/view-mode-toggle";
+import { RangeComparison } from "@/components/composition/range-comparison";
 import { EventTimelineSidebar } from "@/components/events/event-timeline-sidebar";
 import { JccHistoryChart } from "@/components/curve/jcc-history-chart";
-import { snapshotForMonth, type EventRow, type PivotResult, type ViewMode } from "@/lib/composition";
+import { type EventRow, type PivotResult, type ViewMode } from "@/lib/composition";
 import type { AlignedRow } from "@/lib/curve";
 
 interface Props {
@@ -26,30 +25,30 @@ export function CompositionView({ pivotedByMode, events, initialView, aligned }:
   const [viewMode, setViewMode] = useState<ViewMode>(initialView);
   const pivoted = pivotedByMode[viewMode];
 
-  // Default scrubber position = latest month.
-  const [monthIndex, setMonthIndex] = useState(() => pivoted.rows.length - 1);
-  // Treemap updates can lag the slider feedback to keep the UI snappy.
-  const deferredMonthIndex = useDeferredValue(monthIndex);
+  // Range selection — defaults to full window. User drags the Brush below the
+  // area chart to narrow it. Indices are positions in `pivoted.rows`.
+  const lastIdx = Math.max(0, pivoted.rows.length - 1);
+  const [startIdx, setStartIdx] = useState(0);
+  const [endIdx, setEndIdx] = useState(lastIdx);
+
+  // If the user switches view mode, the row count is the same (months are the
+  // same) so indices stay valid. Clamp defensively anyway.
+  useEffect(() => {
+    setStartIdx((s) => Math.min(s, lastIdx));
+    setEndIdx((e) => Math.min(e, lastIdx));
+  }, [lastIdx]);
 
   const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
 
   const monthLabels = useMemo(() => pivoted.rows.map((r) => r.month), [pivoted]);
 
-  // Date label for the scrubber: "2026-03" not "2026-03-01" for tightness.
-  const scrubbedLabel = useMemo(
-    () => (monthLabels[monthIndex] ?? "").slice(0, 7),
-    [monthIndex, monthLabels],
-  );
-
-  const treemapData = useMemo(
-    () => snapshotForMonth(pivoted, deferredMonthIndex),
-    [pivoted, deferredMonthIndex],
-  );
-
   // Event currently hovered → its date_from is what we draw on the chart.
   const hoveredEvent = events.find((e) => e.id === hoveredEventId) ?? null;
   const eventReferenceMonth = hoveredEvent ? hoveredEvent.date_from : null;
   const eventReferenceLabel = hoveredEvent?.title ?? null;
+
+  const rangeStartMonth = monthLabels[Math.min(startIdx, endIdx)] ?? null;
+  const rangeEndMonth = monthLabels[Math.max(startIdx, endIdx)] ?? null;
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_300px]">
@@ -64,17 +63,21 @@ export function CompositionView({ pivotedByMode, events, initialView, aligned }:
               data={pivoted.rows}
               seriesKeys={pivoted.seriesKeys}
               displayNames={pivoted.displayNames}
-              referenceMonth={eventReferenceMonth ?? monthLabels[monthIndex]}
+              referenceMonth={eventReferenceMonth}
               referenceLabel={eventReferenceLabel}
               viewMode={viewMode}
               syncId={TIME_SYNC_ID}
+              brushStartIndex={startIdx}
+              brushEndIndex={endIdx}
+              onBrushChange={(s, e) => {
+                setStartIdx(s);
+                setEndIdx(e);
+              }}
             />
-            <DateScrubber
-              monthLabels={monthLabels}
-              monthIndex={monthIndex}
-              onChange={setMonthIndex}
-              scrubbedLabel={scrubbedLabel}
-            />
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+              Drag the handles below the chart to pick a date range. The
+              comparison panel on the right updates live.
+            </p>
           </CardContent>
         </Card>
 
@@ -92,6 +95,8 @@ export function CompositionView({ pivotedByMode, events, initialView, aligned }:
                 syncId={TIME_SYNC_ID}
                 externalReferenceMonth={eventReferenceMonth}
                 externalReferenceLabel={eventReferenceLabel}
+                rangeStartMonth={rangeStartMonth}
+                rangeEndMonth={rangeEndMonth}
               />
             </CardContent>
           </Card>
@@ -99,12 +104,16 @@ export function CompositionView({ pivotedByMode, events, initialView, aligned }:
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-medium">
-              Snapshot — {scrubbedLabel}
-            </CardTitle>
+            <CardTitle className="text-base font-medium">Range comparison</CardTitle>
           </CardHeader>
           <CardContent>
-            <CompositionTreemap data={treemapData} viewMode={viewMode} />
+            <RangeComparison
+              pivoted={pivoted}
+              startIdx={startIdx}
+              endIdx={endIdx}
+              viewMode={viewMode}
+              aligned={aligned}
+            />
           </CardContent>
         </Card>
       </div>

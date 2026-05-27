@@ -188,3 +188,54 @@ export function snapshotForMonth(
     .filter((d) => d.size > 0.001)
     .sort((a, b) => b.size - a.size);
 }
+
+/**
+ * Per-series share change between two months in a `PivotResult`.
+ *
+ * Used by the Range Comparison card on `/composition`. Threshold of 0.05 pp
+ * separates a "real" appearance/disappearance from a rounding artefact.
+ */
+export interface CompositionDelta {
+  key: string;
+  displayName: string;
+  startShare: number;
+  endShare: number;
+  deltaPp: number;
+  /** "new" = first appears in range; "removed" = drops out by end; "changed" otherwise. */
+  status: "new" | "removed" | "changed";
+}
+
+export function compositionDelta(
+  pivoted: PivotResult,
+  startIdx: number,
+  endIdx: number,
+): CompositionDelta[] {
+  if (startIdx === endIdx) return [];
+  const lo = Math.min(startIdx, endIdx);
+  const hi = Math.max(startIdx, endIdx);
+  const startRow = pivoted.rows[lo];
+  const endRow = pivoted.rows[hi];
+  if (!startRow || !endRow) return [];
+
+  const APPEAR_THRESHOLD = 0.05; // pp — under this is "absent" for status purposes
+
+  const out: CompositionDelta[] = [];
+  for (const key of pivoted.seriesKeys) {
+    const startShare = Number(startRow[key]) || 0;
+    const endShare = Number(endRow[key]) || 0;
+    if (startShare < APPEAR_THRESHOLD && endShare < APPEAR_THRESHOLD) continue;
+    let status: CompositionDelta["status"] = "changed";
+    if (startShare < APPEAR_THRESHOLD && endShare >= APPEAR_THRESHOLD) status = "new";
+    else if (startShare >= APPEAR_THRESHOLD && endShare < APPEAR_THRESHOLD) status = "removed";
+    out.push({
+      key,
+      displayName: pivoted.displayNames[key] ?? key,
+      startShare,
+      endShare,
+      deltaPp: endShare - startShare,
+      status,
+    });
+  }
+  // Sort by absolute delta desc — biggest movers first.
+  return out.sort((a, b) => Math.abs(b.deltaPp) - Math.abs(a.deltaPp));
+}

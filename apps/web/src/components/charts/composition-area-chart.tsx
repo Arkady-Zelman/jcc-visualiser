@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import {
   Area,
   AreaChart,
+  Brush,
   CartesianGrid,
   Label,
   ReferenceLine,
@@ -27,6 +28,11 @@ interface Props {
   viewMode: ViewMode;
   /** Recharts syncId — pass the same value to a sibling chart for cross-hover. */
   syncId?: string;
+  /** Initial / controlled brush window — indices into `data`. */
+  brushStartIndex?: number;
+  brushEndIndex?: number;
+  /** Fires whenever the brush handles move. */
+  onBrushChange?: (startIndex: number, endIndex: number) => void;
 }
 
 const TICK_STYLE = { fontSize: 11, fill: "currentColor" };
@@ -45,6 +51,9 @@ export function CompositionAreaChart({
   referenceLabel,
   viewMode,
   syncId,
+  brushStartIndex,
+  brushEndIndex,
+  onBrushChange,
 }: Props) {
   // Tick formatter: show every Jan as a major tick.
   const monthTickFormatter = (m: string) => (m.endsWith("-01-01") ? m.slice(0, 4) : "");
@@ -112,6 +121,27 @@ export function CompositionAreaChart({
                 />
               ) : null}
             </ReferenceLine>
+          )}
+          {onBrushChange && (
+            <Brush
+              dataKey="month"
+              height={28}
+              startIndex={brushStartIndex}
+              endIndex={brushEndIndex}
+              stroke="#71717a"
+              fill="rgba(255,255,255,0.04)"
+              travellerWidth={8}
+              tickFormatter={(m) => String(m).slice(0, 7)}
+              onChange={(range) => {
+                if (
+                  range &&
+                  typeof range.startIndex === "number" &&
+                  typeof range.endIndex === "number"
+                ) {
+                  onBrushChange(range.startIndex, range.endIndex);
+                }
+              }}
+            />
           )}
         </AreaChart>
       </ResponsiveContainer>

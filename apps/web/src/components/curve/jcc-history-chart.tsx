@@ -6,6 +6,7 @@ import {
   Label,
   Line,
   LineChart,
+  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -44,6 +45,9 @@ interface Props {
    */
   externalReferenceMonth?: string | null;
   externalReferenceLabel?: string | null;
+  /** Optional shaded range — draws a `<ReferenceArea>` between these months. */
+  rangeStartMonth?: string | null;
+  rangeEndMonth?: string | null;
 }
 
 const TICK_STYLE = { fontSize: 11, fill: "currentColor" };
@@ -66,6 +70,8 @@ export function JccHistoryChart({
   syncId,
   externalReferenceMonth,
   externalReferenceLabel,
+  rangeStartMonth,
+  rangeEndMonth,
 }: Props) {
   const [unit, setUnit] = useState<Unit>("usd");
   const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
@@ -150,6 +156,16 @@ export function JccHistoryChart({
             isAnimationActive={false}
             className="dark:[&_path]:stroke-zinc-200"
           />
+          {rangeStartMonth && rangeEndMonth && rangeStartMonth !== rangeEndMonth && (
+            <ReferenceArea
+              x1={rangeStartMonth}
+              x2={rangeEndMonth}
+              fill="#3b82f6"
+              fillOpacity={0.08}
+              stroke="#3b82f6"
+              strokeOpacity={0.25}
+            />
+          )}
           {refMonth && (
             <ReferenceLine
               x={refMonth}
