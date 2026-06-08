@@ -29,7 +29,7 @@ export default async function CompositionPage({ searchParams }: PageProps) {
 
   const supabase = createClient();
 
-  const [composition, grades, events, jccLatestResp, jcc, wtiDaily, brentDaily] = await Promise.all([
+  const [composition, grades, events, jccLatestResp, compositionLatestResp, jcc, wtiDaily, brentDaily] = await Promise.all([
     fetchAll<CompositionRow>(() =>
       supabase
         .from("composition_monthly")
@@ -53,6 +53,12 @@ export default async function CompositionPage({ searchParams }: PageProps) {
     supabase
       .from("jcc_monthly")
       .select("month, jcc_value_jpy_per_kl, jcc_value_usd_per_bbl, status")
+      .order("month", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("composition_monthly")
+      .select("month")
       .order("month", { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -82,6 +88,11 @@ export default async function CompositionPage({ searchParams }: PageProps) {
   ]);
 
   const jccLatest = jccLatestResp.data;
+  const compositionLatest = compositionLatestResp.data;
+  const showFreshnessNote =
+    !!jccLatest?.month &&
+    !!compositionLatest?.month &&
+    compositionLatest.month > jccLatest.month;
 
   // Build the same `aligned` shape `/curve` uses so we can render JccHistoryChart
   // below the area chart with identical data semantics + cross-hover sync.
@@ -110,7 +121,7 @@ export default async function CompositionPage({ searchParams }: PageProps) {
           the basket composition has evolved.
         </p>
         {jccLatest && (
-          <div className="mt-3 flex items-center gap-2 text-sm">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
             <span className="rounded-full bg-zinc-900 px-3 py-1 text-zinc-50 dark:bg-zinc-50 dark:text-zinc-950">
               Latest JCC ({jccLatest.month}):
               {" "}¥{jccLatest.jcc_value_jpy_per_kl?.toLocaleString()}/kl
@@ -122,6 +133,14 @@ export default async function CompositionPage({ searchParams }: PageProps) {
               {jccLatest.status}
             </span>
           </div>
+        )}
+        {showFreshnessNote && (
+          <p className="mt-3 max-w-2xl rounded-md border border-zinc-300 bg-zinc-50 px-3 py-2 text-xs leading-relaxed text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900/60 dark:text-zinc-400">
+            The basket chart goes through <span className="font-medium text-zinc-900 dark:text-zinc-200">{compositionLatest!.month}</span>,
+            but the headline JCC price above only goes to <span className="font-medium text-zinc-900 dark:text-zinc-200">{jccLatest.month}</span>.
+            That's because Japan Customs publishes import volumes (which we use to build the basket) a few weeks before the Petroleum
+            Association of Japan publishes the official JCC price. See <a href="/sources" className="underline hover:text-zinc-900 dark:hover:text-zinc-100">Data sources</a> for details.
+          </p>
         )}
       </header>
 

@@ -66,6 +66,14 @@ function TopNav() {
                 Curve
               </Link>
             </li>
+            <li>
+              <Link
+                href="/sources"
+                className="transition-colors hover:text-neutral-100"
+              >
+                Sources
+              </Link>
+            </li>
           </ul>
         </nav>
       </div>
