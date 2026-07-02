@@ -36,7 +36,7 @@ const STAGES: Stage[] = [
     label: "LNG indexation",
     delta: "M + 4",
     detail:
-      "JCC values feed into LNG long-term contracts indexed off a trailing 3-month JCC average — the famous 3-0-1 formula. A June 2026 LNG cargo prices off Mar–May 2026 JCC.",
+      "JCC values feed into LNG long-term contracts indexed off a trailing 3-month JCC average — the famous 3-0-1 formula. A July 2026 LNG cargo prices off Apr–Jun 2026 JCC.",
   },
 ];
 

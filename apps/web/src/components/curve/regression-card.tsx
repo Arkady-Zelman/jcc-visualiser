@@ -130,7 +130,7 @@ export function RegressionCard({ model, aligned }: Props) {
           <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
             Spikes show months when the lag-aware regression undershot (positive)
             or overshot (negative) the published JCC — typically regime shifts
-            (2014–15 oil crash, 2020 COVID, 2022 Russia, 2025 Hormuz).
+            (2014–15 oil crash, 2020 COVID, 2022 Russia, 2026 Iran war / Hormuz closure).
           </p>
         </div>
       </CardContent>

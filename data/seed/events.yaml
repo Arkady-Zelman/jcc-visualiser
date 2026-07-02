@@ -220,16 +220,20 @@ events:
 
   # ============== 2026 ==============
   - id: hormuz_tensions_2026
-    date_from: '2026-04-01'
-    date_to: null
-    category: geopolitics
-    title: Strait of Hormuz tensions and Japanese diversification
+    date_from: '2026-02-28'
+    date_to: '2026-06-29'
+    category: supply_shock
+    title: Iran war — Strait of Hormuz supply crisis
     description_md: |
-      Heightened geopolitical risk in the Strait of Hormuz (Iran/Israel escalation)
-      prompted Japanese refiners to accelerate diversification of crude sourcing —
-      visible as higher Sakhalin-2 lifting (despite the broader G7 cap framework),
-      incremental US WTI test cargoes, and slight reduction in single-source Hormuz
-      dependence. The Middle East share remains ~80% but composition diversifies.
+      War with Iran from 28 February 2026 disrupted the Strait of Hormuz, the transit
+      route for ~20% of global oil and LNG and the bulk of Japan's crude supply. Brent
+      jumped ~10–13% in the first days and averaged ~$103/bbl in March and ~$117/bbl
+      at the April peak (vs ~$71 in February). Japan's April crude imports collapsed
+      ~66% year-on-year to ~4 million kl — the lowest monthly volume since records
+      began in 1979 — with Middle East arrivals down ~68%. Refiners deepened run cuts
+      and Japan released strategic reserves as part of an IEA-coordinated ~400 mb
+      global release. The April JCC printed ¥101,389/kl ($101.21/bbl), +49% m/m; the
+      lagged JCC stays elevated in the May–June prints even as spot eased.
     impact_grades:
       - espo
       - wti
@@ -243,5 +247,32 @@ events:
       - oman
       - dubai
     sources:
-      - https://energyandcleanair.org/april-2026-monthly-analysis-of-russian-fossil-fuel-exports-and-sanctions/
-      - https://carnegieendowment.org/russia-eurasia/politika/2026/04/russia-japan-oil-projects
+      - https://en.wikipedia.org/wiki/2026_Strait_of_Hormuz_crisis
+      - https://oilprice.com/Latest-Energy-News/World-News/Japan-Crude-Imports-Fell-66-in-April.html
+      - https://www.iea.org/reports/oil-market-report-may-2026
+
+  - id: hormuz_reopening_2026
+    date_from: '2026-06-29'
+    date_to: null
+    category: geopolitics
+    title: US–Iran agreement reopens the Strait of Hormuz
+    description_md: |
+      Washington and Tehran agreed to halt hostilities and reopen the Strait of
+      Hormuz in late June 2026; more than 20 tankers carrying ~35 million barrels
+      transited soon after. Brent erased its wartime gains, falling back to ~$72/bbl —
+      roughly pre-war levels. Because the JCC reflects cargoes priced one to two
+      months earlier, the published JCC is expected to normalise with a lag through
+      the summer prints, and Japanese import volumes to recover from the April low.
+    impact_grades:
+      - arab_light
+      - arab_medium
+      - arab_heavy
+      - arab_extra_light
+      - murban
+      - das
+      - upper_zakum
+      - oman
+      - dubai
+    sources:
+      - https://www.cnbc.com/2026/06/29/oil-prices-wti-brent-crude-us-iran-strikes-strait-hormuz-talks.html
+      - https://www.cnbc.com/amp/2026/06/25/oil-price-supply-concerns-ease-with-hormuz-tanker-traffic-resuming-.html

@@ -61,7 +61,7 @@ export default async function Home() {
         <SurfaceCard
           href="/composition"
           title="Composition"
-          description="100% stacked area of grade share over 15 years, with hover-cards on curated geopolitical events."
+          description="100% stacked area of grade share since 2016, with hover-cards on curated geopolitical events — updated through the latest customs month."
         />
         <SurfaceCard
           href="/grades"
@@ -71,7 +71,7 @@ export default async function Home() {
         <SurfaceCard
           href="/curve"
           title="Curve"
-          description="How JCC moves: 14 years of history, a regression against Brent + WTI, and the structural ~4-month lag from physical to LNG settled."
+          description="How JCC moves: full history since 2012, a regression against Brent + WTI, and the structural ~4-month lag from physical to LNG settled."
         />
       </section>
 
