@@ -191,12 +191,10 @@ export default async function CompositionPage({ searchParams }: PageProps) {
               Physical flows
             </p>
             <h2 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-              Volumes behind the basket
+              Import volumes
             </h2>
             <p className="max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
-              The composition above shows shares; these charts show absolute barrels.
-              Supply shocks that barely move the share mix — like the 2026 Hormuz
-              closure — show up here as an import collapse and stockpile withdrawals.
+              Kilolitres (kl), axes in millions.
             </p>
           </header>
           <div className="grid gap-8 lg:grid-cols-2">
