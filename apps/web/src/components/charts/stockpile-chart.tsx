@@ -16,12 +16,13 @@ import {
 } from "recharts";
 
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { StockpileChartRow } from "@/lib/flows";
+import { convertKl, type StockpileChartRow, type VolumeUnit } from "@/lib/flows";
 
 type View = "change" | "levels";
 
 interface Props {
   data: StockpileChartRow[];
+  unit: VolumeUnit;
 }
 
 const TICK_STYLE = { fontSize: 11, fill: "currentColor" };
@@ -38,21 +39,36 @@ const TOOLTIP_STYLE = {
 
 const LEGEND_STYLE = { fontSize: 11 } as const;
 
-function formatMkl(v: number): string {
-  return `${(v / 1_000_000).toFixed(2)}M kl`;
-}
-
-export function StockpileChart({ data }: Props) {
+export function StockpileChart({ data, unit }: Props) {
   const [view, setView] = useState<View>("change");
+
+  const converted = useMemo(() => {
+    const conv = (v: number | null) => (v != null ? convertKl(v, unit) : null);
+    return data.map((r) => ({
+      month: r.month,
+      privateLevel: conv(r.privateKl),
+      governmentLevel: conv(r.governmentKl),
+      privateDelta: conv(r.privateDeltaKl),
+      governmentDelta: conv(r.governmentDeltaKl),
+    }));
+  }, [data, unit]);
 
   // The first month has no prior month to diff against — drop it from the change view.
   const changeData = useMemo(
-    () => data.filter((r) => r.privateDeltaKl != null || r.governmentDeltaKl != null),
-    [data],
+    () => converted.filter((r) => r.privateDelta != null || r.governmentDelta != null),
+    [converted],
   );
 
   const yearTickFormatter = (m: string) => (m.endsWith("-01-01") ? m.slice(0, 4) : "");
   const labelFormatter = (l: unknown) => String(l).slice(0, 7);
+  const yTickFormatter =
+    unit === "kl"
+      ? (v: number) => `${(v / 1_000_000).toFixed(0)}M`
+      : (v: number) => `${Math.round(v / 1_000)}k`;
+  const formatValue = (v: number) =>
+    unit === "kl"
+      ? `${(v / 1_000_000).toFixed(2)}M kl`
+      : `${Math.round(v).toLocaleString()} kbbl`;
 
   return (
     <div className="space-y-3">
@@ -86,35 +102,31 @@ export function StockpileChart({ data }: Props) {
                 interval={0}
                 minTickGap={28}
               />
-              <YAxis
-                tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}M`}
-                tick={TICK_STYLE}
-                width={44}
-              />
+              <YAxis tickFormatter={yTickFormatter} tick={TICK_STYLE} width={44} />
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
                 formatter={(v, name) => [
-                  formatMkl(Number(v)),
-                  name === "privateDeltaKl" ? "Private change" : "Government change",
+                  formatValue(Number(v)),
+                  name === "privateDelta" ? "Private change" : "Government change",
                 ]}
                 labelFormatter={labelFormatter}
               />
               <Legend
                 wrapperStyle={LEGEND_STYLE}
                 formatter={(value) =>
-                  value === "privateDeltaKl" ? "Private (commercial)" : "Government (national reserve)"
+                  value === "privateDelta" ? "Private (commercial)" : "Government (national reserve)"
                 }
               />
               <ReferenceLine y={0} stroke="currentColor" strokeOpacity={0.3} />
               <Bar
-                dataKey="privateDeltaKl"
+                dataKey="privateDelta"
                 stackId="delta"
                 fill={PRIVATE_COLOR}
                 fillOpacity={0.85}
                 isAnimationActive={false}
               />
               <Bar
-                dataKey="governmentDeltaKl"
+                dataKey="governmentDelta"
                 stackId="delta"
                 fill={GOVERNMENT_COLOR}
                 fillOpacity={0.85}
@@ -122,7 +134,7 @@ export function StockpileChart({ data }: Props) {
               />
             </BarChart>
           ) : (
-            <AreaChart data={data} margin={{ top: 10, right: 12, left: 0, bottom: 8 }}>
+            <AreaChart data={converted} margin={{ top: 10, right: 12, left: 0, bottom: 8 }}>
               <CartesianGrid stroke="currentColor" strokeOpacity={0.08} vertical={false} />
               <XAxis
                 dataKey="month"
@@ -132,7 +144,7 @@ export function StockpileChart({ data }: Props) {
                 minTickGap={28}
               />
               <YAxis
-                tickFormatter={(v: number) => `${(v / 1_000_000).toFixed(0)}M`}
+                tickFormatter={yTickFormatter}
                 domain={[0, "auto"]}
                 tick={TICK_STYLE}
                 width={44}
@@ -140,20 +152,20 @@ export function StockpileChart({ data }: Props) {
               <Tooltip
                 contentStyle={TOOLTIP_STYLE}
                 formatter={(v, name) => [
-                  formatMkl(Number(v)),
-                  name === "privateKl" ? "Private crude" : "Government crude",
+                  formatValue(Number(v)),
+                  name === "privateLevel" ? "Private crude" : "Government crude",
                 ]}
                 labelFormatter={labelFormatter}
               />
               <Legend
                 wrapperStyle={LEGEND_STYLE}
                 formatter={(value) =>
-                  value === "privateKl" ? "Private (commercial)" : "Government (national reserve)"
+                  value === "privateLevel" ? "Private (commercial)" : "Government (national reserve)"
                 }
               />
               <Area
                 type="monotone"
-                dataKey="governmentKl"
+                dataKey="governmentLevel"
                 stackId="level"
                 stroke={GOVERNMENT_COLOR}
                 fill={GOVERNMENT_COLOR}
@@ -162,7 +174,7 @@ export function StockpileChart({ data }: Props) {
               />
               <Area
                 type="monotone"
-                dataKey="privateKl"
+                dataKey="privateLevel"
                 stackId="level"
                 stroke={PRIVATE_COLOR}
                 fill={PRIVATE_COLOR}

@@ -1,8 +1,7 @@
 import { Suspense } from "react";
 
 import { CompositionView } from "@/components/composition/composition-view";
-import { ImportVolumeChart } from "@/components/charts/import-volume-chart";
-import { StockpileChart } from "@/components/charts/stockpile-chart";
+import { PhysicalFlows } from "@/components/composition/physical-flows";
 import { createClient, fetchAll } from "@/lib/supabase/server";
 import {
   pivotToChart,
@@ -185,45 +184,7 @@ export default async function CompositionPage({ searchParams }: PageProps) {
       )}
 
       {(importVolumes.length > 0 || stockpiles.length > 0) && (
-        <section className="mt-10">
-          <header className="mb-4 space-y-1">
-            <p className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
-              Physical flows
-            </p>
-            <h2 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
-              Import volumes
-            </h2>
-            <p className="max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
-              Kilolitres (kl), axes in millions.
-            </p>
-          </header>
-          <div className="grid gap-8 lg:grid-cols-2">
-            {importVolumes.length > 0 && (
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Total crude imports (kl / month)
-                </p>
-                <ImportVolumeChart data={importVolumes} syncId="composition-time" />
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                  Source: Japan Customs via e-Stat, HS 2709.00.900. Latest month is
-                  provisional.
-                </p>
-              </div>
-            )}
-            {stockpiles.length > 0 && (
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Crude stockpiles — builds and withdrawals (kl)
-                </p>
-                <StockpileChart data={stockpiles} />
-                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-                  Source: PAJ Oil Stockpiling (METI data), crude only, from 2017.
-                  Government withdrawals mark strategic reserve releases.
-                </p>
-              </div>
-            )}
-          </div>
-        </section>
+        <PhysicalFlows importVolumes={importVolumes} stockpiles={stockpiles} />
       )}
     </div>
   );

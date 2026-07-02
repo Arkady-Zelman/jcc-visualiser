@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Bar,
   BarChart,
@@ -10,24 +11,38 @@ import {
   YAxis,
 } from "recharts";
 
-import type { ImportVolumeRow } from "@/lib/flows";
+import { convertKl, type ImportVolumeRow, type VolumeUnit } from "@/lib/flows";
 
 interface Props {
   data: ImportVolumeRow[];
+  unit: VolumeUnit;
   /** Recharts syncId — same value as the composition charts for cross-hover. */
   syncId?: string;
 }
 
 const TICK_STYLE = { fontSize: 11, fill: "currentColor" };
 
-export function ImportVolumeChart({ data, syncId }: Props) {
+export function ImportVolumeChart({ data, unit, syncId }: Props) {
+  const converted = useMemo(
+    () => data.map((r) => ({ month: r.month, value: convertKl(r.volumeKl, unit) })),
+    [data, unit],
+  );
+
   const yearTickFormatter = (m: string) => (m.endsWith("-01-01") ? m.slice(0, 4) : "");
+  const yTickFormatter =
+    unit === "kl"
+      ? (v: number) => `${Math.round(v / 1_000_000)}M`
+      : (v: number) => `${Math.round(v / 1_000)}k`;
+  const tooltipValue = (v: number) =>
+    unit === "kl"
+      ? `${(v / 1_000_000).toFixed(2)}M kl`
+      : `${Math.round(v).toLocaleString()} kbbl`;
 
   return (
     <div className="text-zinc-700 dark:text-zinc-300">
       <ResponsiveContainer width="100%" height={280}>
         <BarChart
-          data={data}
+          data={converted}
           syncId={syncId}
           syncMethod="value"
           margin={{ top: 10, right: 12, left: 0, bottom: 8 }}
@@ -41,7 +56,7 @@ export function ImportVolumeChart({ data, syncId }: Props) {
             minTickGap={28}
           />
           <YAxis
-            tickFormatter={(v: number) => `${Math.round(v / 1_000_000)}M`}
+            tickFormatter={yTickFormatter}
             domain={[0, "auto"]}
             tick={TICK_STYLE}
             width={44}
@@ -54,11 +69,11 @@ export function ImportVolumeChart({ data, syncId }: Props) {
               padding: "6px 10px",
               backgroundColor: "var(--popover, #fff)",
             }}
-            formatter={(v) => [`${(Number(v) / 1_000_000).toFixed(2)}M kl`, "Crude imports"]}
+            formatter={(v) => [tooltipValue(Number(v)), "Crude imports"]}
             labelFormatter={(l) => String(l).slice(0, 7)}
           />
           <Bar
-            dataKey="volumeKl"
+            dataKey="value"
             fill="#71717a"
             fillOpacity={0.85}
             isAnimationActive={false}

@@ -9,6 +9,16 @@ import type { Database } from "@/types/db";
 
 export type StockpileRow = Database["public"]["Tables"]["oil_stockpile_monthly"]["Row"];
 
+/** Barrels per kilolitre (1 bbl = 158.987 l). */
+export const KL_TO_BBL = 6.28981;
+
+export type VolumeUnit = "kl" | "kbbl";
+
+/** Convert a kl value into the display unit (kbbl = thousand barrels). */
+export function convertKl(valueKl: number, unit: VolumeUnit): number {
+  return unit === "kl" ? valueKl : (valueKl * KL_TO_BBL) / 1000;
+}
+
 export interface ImportVolumeRow {
   /** ISO month, e.g. "2026-04-01". */
   month: string;
