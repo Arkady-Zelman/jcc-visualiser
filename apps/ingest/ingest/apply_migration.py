@@ -43,12 +43,14 @@ def candidate_dsns(ref: str, password: str) -> list[tuple[str, str]]:
     """Return [(label, dsn)] in order of preference: pooler regions then direct host."""
     out: list[tuple[str, str]] = []
     for region in POOLER_REGIONS:
-        out.append(
-            (
-                f"pooler/{region}",
-                f"postgresql://postgres.{ref}:{password}@aws-0-{region}.pooler.supabase.com:6543/postgres",
+        # Supabase has migrated projects from aws-0-* to aws-1-* pooler hosts; sweep both.
+        for cluster in ("aws-1", "aws-0"):
+            out.append(
+                (
+                    f"pooler/{cluster}/{region}",
+                    f"postgresql://postgres.{ref}:{password}@{cluster}-{region}.pooler.supabase.com:6543/postgres",
+                )
             )
-        )
     out.append(("direct", f"postgresql://postgres:{password}@db.{ref}.supabase.co:5432/postgres"))
     return out
 

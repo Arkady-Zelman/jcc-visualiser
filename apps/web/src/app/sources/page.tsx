@@ -133,7 +133,26 @@ export default async function SourcesPage() {
         </p>
       </Section>
 
-      <Section title="4. Daily reference prices" badge="Real — official">
+      <Section title="4. Import volumes, refinery runs and stockpiles" badge="Real — official">
+        <p>
+          The "Physical flows" charts use two more workbooks from the{" "}
+          <ExtLink href="https://www.paj.gr.jp/english/statis/">
+            Petroleum Association of Japan
+          </ExtLink>
+          {" "}(underlying data: METI). "Supply and Demand of Crude Oil"
+          (paj-01E) gives monthly production, imports, refinery throughput and
+          end-of-month inventory back to 2002. "Oil Stockpiling" (paj-05E)
+          gives private and government stockpile levels and days-of-supply
+          back to 2017 — government withdrawals show strategic reserve
+          releases, like the ~5.9 million kilolitre release of April 2026.
+        </p>
+        <p className="mt-2">
+          The total-imports chart itself uses the Japan Customs data from
+          section 2, so it always matches the composition chart above it.
+        </p>
+      </Section>
+
+      <Section title="5. Daily reference prices" badge="Real — official">
         <p>
           The forward-curve and regression views need daily reference prices.
           We pull WTI (Cushing) and Brent spot from the{" "}
@@ -152,7 +171,7 @@ export default async function SourcesPage() {
         </p>
       </Section>
 
-      <Section title="5. What we don't have" badge="Paywalled or retired">
+      <Section title="6. What we don't have" badge="Paywalled or retired">
         <ul className="ml-5 list-disc space-y-1">
           <li>
             <span className="font-medium">JCC futures curve</span> — CME

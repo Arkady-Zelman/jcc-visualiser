@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 
 import { CompositionView } from "@/components/composition/composition-view";
+import { ImportVolumeChart } from "@/components/charts/import-volume-chart";
+import { StockpileChart } from "@/components/charts/stockpile-chart";
 import { createClient, fetchAll } from "@/lib/supabase/server";
 import {
   pivotToChart,
@@ -9,6 +11,11 @@ import {
   type GradeRow,
   type ViewMode,
 } from "@/lib/composition";
+import {
+  stockpileSeries,
+  totalImportsByMonth,
+  type StockpileRow,
+} from "@/lib/flows";
 import { MIN_DATA_DATE, MIN_DATA_MONTH } from "@/lib/constants";
 import {
   alignSeries,
@@ -29,7 +36,7 @@ export default async function CompositionPage({ searchParams }: PageProps) {
 
   const supabase = createClient();
 
-  const [composition, grades, events, jccLatestResp, compositionLatestResp, jcc, wtiDaily, brentDaily] = await Promise.all([
+  const [composition, grades, events, jccLatestResp, compositionLatestResp, jcc, wtiDaily, brentDaily, importRows, stockpileRows] = await Promise.all([
     fetchAll<CompositionRow>(() =>
       supabase
         .from("composition_monthly")
@@ -85,6 +92,20 @@ export default async function CompositionPage({ searchParams }: PageProps) {
         .gte("date", MIN_DATA_DATE)
         .order("date"),
     ),
+    fetchAll<{ month: string; volume_kl: number }>(() =>
+      supabase
+        .from("imports_monthly")
+        .select("month, volume_kl")
+        .gte("month", MIN_DATA_MONTH)
+        .order("month"),
+    ),
+    fetchAll<StockpileRow>(() =>
+      supabase
+        .from("oil_stockpile_monthly")
+        .select("*")
+        .gte("month", MIN_DATA_MONTH)
+        .order("month"),
+    ),
   ]);
 
   const jccLatest = jccLatestResp.data;
@@ -105,6 +126,9 @@ export default async function CompositionPage({ searchParams }: PageProps) {
     origin: pivotToChart(composition, grades, "origin"),
     region: pivotToChart(composition, grades, "region"),
   };
+
+  const importVolumes = totalImportsByMonth(importRows);
+  const stockpiles = stockpileSeries(stockpileRows);
 
   return (
     <div className="mx-auto w-full max-w-[1400px] px-4 sm:px-7 py-8">
@@ -158,6 +182,50 @@ export default async function CompositionPage({ searchParams }: PageProps) {
             aligned={aligned}
           />
         </Suspense>
+      )}
+
+      {(importVolumes.length > 0 || stockpiles.length > 0) && (
+        <section className="mt-10">
+          <header className="mb-4 space-y-1">
+            <p className="text-xs uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+              Physical flows
+            </p>
+            <h2 className="text-xl font-semibold tracking-tight text-zinc-950 dark:text-zinc-50">
+              Volumes behind the basket
+            </h2>
+            <p className="max-w-2xl text-sm text-zinc-600 dark:text-zinc-400">
+              The composition above shows shares; these charts show absolute barrels.
+              Supply shocks that barely move the share mix — like the 2026 Hormuz
+              closure — show up here as an import collapse and stockpile withdrawals.
+            </p>
+          </header>
+          <div className="grid gap-8 lg:grid-cols-2">
+            {importVolumes.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Total crude imports (kl / month)
+                </p>
+                <ImportVolumeChart data={importVolumes} syncId="composition-time" />
+                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  Source: Japan Customs via e-Stat, HS 2709.00.900. Latest month is
+                  provisional.
+                </p>
+              </div>
+            )}
+            {stockpiles.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Crude stockpiles — builds and withdrawals (kl)
+                </p>
+                <StockpileChart data={stockpiles} />
+                <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">
+                  Source: PAJ Oil Stockpiling (METI data), crude only, from 2017.
+                  Government withdrawals mark strategic reserve releases.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
       )}
     </div>
   );

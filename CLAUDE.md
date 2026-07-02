@@ -40,7 +40,7 @@ Plus a thin `/` landing.
 Simple npm workspace, two apps:
 
 - **`apps/web/`** — Next.js 16 App Router (TS strict), React 19, Tailwind v4, shadcn/ui, Recharts. Server Components by default; cron endpoints under `src/app/api/cron/`. Deployed to Vercel (auto region). **Read `apps/web/AGENTS.md` before editing Next-specific code** — Next 16 has APIs and conventions that diverge from older training data.
-- **`apps/ingest/`** — Python 3.11 (`pyproject.toml`, `.venv`). Five jobs: `paj`, `customs`, `benchmarks`, `jcc_futures`, `derive_composition`. Pydantic validation, `httpx`, idempotent UPSERT into Supabase via service-role key, audited to `compute_runs`. Run monthly via Vercel Cron (mechanism finalised at M3; GitHub Action cron is the fallback).
+- **`apps/ingest/`** — Python 3.11 (`pyproject.toml`, `.venv`). Six jobs: `paj`, `paj_supply`, `customs`, `benchmarks`, `jcc_futures`, `derive_composition`. Pydantic validation, `httpx`, idempotent UPSERT into Supabase via service-role key, audited to `compute_runs`. Run monthly via Vercel Cron (mechanism finalised at M3; GitHub Action cron is the fallback).
 
 Supabase Postgres (free tier, `eu-west-2`). No RLS in v1 (single-operator dashboard). Curated YAMLs in `data/seed/` are the editorial layer — `grades.yaml`, `grade_hs_mapping.yaml`, `events.yaml`, `data_dictionary.yaml`.
 
@@ -68,5 +68,5 @@ Keys are populated by the operator in `.env.local` (Next.js, repo root) and `app
 
 - `npm run dev` — Next.js dev server at http://localhost:3000.
 - `cd apps/ingest && .venv/bin/python -m ingest.healthcheck` — verify Supabase connectivity.
-- `cd apps/ingest && .venv/bin/python -m ingest.<job>` — run any ingest job locally (`paj`, `customs`, `benchmarks`, `jcc_futures`, `derive_composition`, `seed`).
+- `cd apps/ingest && .venv/bin/python -m ingest.<job>` — run any ingest job locally (`paj`, `paj_supply`, `customs`, `benchmarks`, `jcc_futures`, `derive_composition`, `seed`).
 - `npx supabase db push` — apply migrations to the linked Supabase project (or paste `001_init.sql` into the Supabase SQL editor).

@@ -308,14 +308,16 @@ def _pg_connect():
 
     last_exc: Exception | None = None
     for region in _POOLER_REGIONS:
-        dsn = (
-            f"postgresql://postgres.{ref}:{password}"
-            f"@aws-0-{region}.pooler.supabase.com:6543/postgres"
-        )
-        try:
-            return psycopg.connect(dsn, connect_timeout=8)
-        except (psycopg.OperationalError, psycopg.errors.ConnectionFailure) as exc:
-            last_exc = exc
+        # Supabase has migrated projects from aws-0-* to aws-1-* pooler hosts; sweep both.
+        for cluster in ("aws-1", "aws-0"):
+            dsn = (
+                f"postgresql://postgres.{ref}:{password}"
+                f"@{cluster}-{region}.pooler.supabase.com:6543/postgres"
+            )
+            try:
+                return psycopg.connect(dsn, connect_timeout=8)
+            except (psycopg.OperationalError, psycopg.errors.ConnectionFailure) as exc:
+                last_exc = exc
 
     raise RuntimeError(
         f"Could not connect to any Supabase pooler region. Last error: {last_exc}"

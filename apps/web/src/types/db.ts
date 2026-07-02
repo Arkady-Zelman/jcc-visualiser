@@ -261,6 +261,93 @@ export type Database = {
         }
         Relationships: []
       }
+      crude_supply_monthly: {
+        Row: {
+          end_inventory_kl: number | null
+          import_kl: number | null
+          ingested_at: string
+          month: string
+          non_refining_use_kl: number | null
+          production_kl: number | null
+          refinery_throughput_kl: number | null
+          refining_capacity_bpd: number | null
+          source: string
+          source_url: string | null
+          status: string
+          utilization_pct: number | null
+        }
+        Insert: {
+          end_inventory_kl?: number | null
+          import_kl?: number | null
+          ingested_at?: string
+          month: string
+          non_refining_use_kl?: number | null
+          production_kl?: number | null
+          refinery_throughput_kl?: number | null
+          refining_capacity_bpd?: number | null
+          source?: string
+          source_url?: string | null
+          status?: string
+          utilization_pct?: number | null
+        }
+        Update: {
+          end_inventory_kl?: number | null
+          import_kl?: number | null
+          ingested_at?: string
+          month?: string
+          non_refining_use_kl?: number | null
+          production_kl?: number | null
+          refinery_throughput_kl?: number | null
+          refining_capacity_bpd?: number | null
+          source?: string
+          source_url?: string | null
+          status?: string
+          utilization_pct?: number | null
+        }
+        Relationships: []
+      }
+      oil_stockpile_monthly: {
+        Row: {
+          government_crude_kl: number | null
+          government_days: number | null
+          government_products_kl: number | null
+          ingested_at: string
+          month: string
+          private_crude_kl: number | null
+          private_days: number | null
+          private_products_kl: number | null
+          source: string
+          source_url: string | null
+          status: string
+        }
+        Insert: {
+          government_crude_kl?: number | null
+          government_days?: number | null
+          government_products_kl?: number | null
+          ingested_at?: string
+          month: string
+          private_crude_kl?: number | null
+          private_days?: number | null
+          private_products_kl?: number | null
+          source?: string
+          source_url?: string | null
+          status?: string
+        }
+        Update: {
+          government_crude_kl?: number | null
+          government_days?: number | null
+          government_products_kl?: number | null
+          ingested_at?: string
+          month?: string
+          private_crude_kl?: number | null
+          private_days?: number | null
+          private_products_kl?: number | null
+          source?: string
+          source_url?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
       imports_monthly: {
         Row: {
           hs_code: string
