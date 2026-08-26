@@ -58,7 +58,7 @@ export default async function CompositionPage({ searchParams }: PageProps) {
     ),
     supabase
       .from("jcc_monthly")
-      .select("month, jcc_value_jpy_per_kl, jcc_value_usd_per_bbl, status")
+      .select("month, jcc_value_jpy_per_kl, jcc_value_usd_per_bbl, status, source")
       .order("month", { ascending: false })
       .limit(1)
       .maybeSingle(),
@@ -153,7 +153,7 @@ export default async function CompositionPage({ searchParams }: PageProps) {
                 : ""}
             </span>
             <span className="rounded-full border border-zinc-300 px-3 py-1 text-xs uppercase tracking-wide text-zinc-600 dark:border-zinc-700 dark:text-zinc-400">
-              {jccLatest.status}
+              {jccLatest.source === "estat_derived" ? "estimated" : jccLatest.status}
             </span>
           </div>
         )}

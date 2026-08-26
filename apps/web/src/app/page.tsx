@@ -11,7 +11,7 @@ export default async function Home() {
 
   const { data: jccLatest } = await supabase
     .from("jcc_monthly")
-    .select("month, jcc_value_jpy_per_kl, jcc_value_usd_per_bbl, status")
+    .select("month, jcc_value_jpy_per_kl, jcc_value_usd_per_bbl, status, source")
     .order("month", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -50,7 +50,7 @@ export default async function Home() {
                 </p>
               )}
               <span className="rounded-full border border-zinc-300 px-2 py-0.5 text-[10px] uppercase tracking-wide text-zinc-500 dark:border-zinc-700">
-                {jccLatest.status}
+                {jccLatest.source === "estat_derived" ? "estimated" : jccLatest.status}
               </span>
             </div>
           </CardContent>

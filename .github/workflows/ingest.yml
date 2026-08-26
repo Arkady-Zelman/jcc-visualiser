@@ -28,7 +28,7 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: "Which job to run (paj | customs | benchmarks | jcc_futures | derive_composition | all)"
+        description: "Which job to run (paj | paj_supply | customs | benchmarks | jcc_futures | derive_composition | all)"
         required: true
         default: "all"
 
@@ -88,7 +88,11 @@ jobs:
           }
 
           case "$JOB" in
-            paj)                run_one paj ;;
+            paj)
+              run_one paj
+              run_one paj_supply
+              ;;
+            paj_supply)         run_one paj_supply ;;
             customs)            run_one customs ;;
             customs_then_derive)
               run_one customs
@@ -99,6 +103,7 @@ jobs:
             derive_composition) run_one derive_composition ;;
             all)
               run_one paj
+              run_one paj_supply
               run_one customs
               run_one benchmarks
               run_one jcc_futures

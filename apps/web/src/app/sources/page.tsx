@@ -72,6 +72,15 @@ export default async function SourcesPage() {
           number on the dashboard stays on the most recent month they've
           released.
         </p>
+        <p className="mt-2">
+          Since August 2026 the PAJ website blocks automated access, so months
+          PAJ hasn't published (or that we can't fetch) are computed directly
+          from the customs data in section 2: total import value divided by
+          total volume, converted to dollars with the month's average exchange
+          rate. Checked against the full PAJ history, this reproduces the
+          official JCC within 0.05% in recent years. Such months are labelled
+          "estimated" and are replaced by the official figure once available.
+        </p>
       </Section>
 
       <Section title="2. Country-by-country crude imports" badge="Real — official">
