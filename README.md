@@ -68,7 +68,8 @@ The GitHub Actions fallback in `.github/workflows/ingest.yml` covers the same cr
 
 | Job | Cadence | Source | Notes |
 |---|---|---|---|
-| `paj` | Monthly, 8th | paj.gr.jp Excel scrape | PAJ publishes provisional ~25 days after month end |
+| `paj` | Monthly, 8th | paj.gr.jp Excel scrape | PAJ publishes provisional ~25 days after month end; falls back to customs-derived JCC while PAJ blocks bots |
+| `paj_supply` | Monthly, mid-month | paj.gr.jp Excel scrape | Falls back to e-Stat 石油統計 確報 workbook (crude supply) + ANRE 石油備蓄の現況 PDF (stockpiles) while PAJ blocks bots |
 | `customs` | Monthly, mid-month | e-Stat API | Japan Customs trade statistics; ~6 week lag |
 | `benchmarks` | Daily, 06:00 UTC | Frankfurter (FX), EIA (WTI/Brent spot) | EIA `PET.RCLC*.D` futures retired 2024-04 |
 | `derive_composition` | After `customs` | Joins `imports_monthly` + `grade_hs_mapping` | Idempotent; safe to re-run |
@@ -91,7 +92,7 @@ select kind, status, started_at, row_count from compute_runs order by started_at
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
 | `python -m ingest.healthcheck` | Connect to Supabase and print server version |
-| `python -m ingest.<job>` | Run an ingest job locally (`paj`, `customs`, `benchmarks`, `jcc_futures`, `derive_composition`, `seed`) |
+| `python -m ingest.<job>` | Run an ingest job locally (`paj`, `paj_supply`, `customs`, `benchmarks`, `jcc_futures`, `derive_composition`, `seed`) |
 
 ## Troubleshooting
 
@@ -99,6 +100,7 @@ select kind, status, started_at, row_count from compute_runs order by started_at
 - **Next build "missing env" in CI / fresh clones** — `apps/web/.env.local` is a symlink to project-root `.env.local`. Recreate with `ln -s ../../.env.local apps/web/.env.local`. `generateStaticParams` in `grades/[gradeId]/page.tsx` degrades gracefully when env is missing (returns `[]`).
 - **PostgREST results capped at 1000 rows** — long tables (`composition_monthly`, `benchmark_prices_daily`) need pagination. Use `fetchAll()` from `apps/web/src/lib/supabase/server.ts` (server) or `chunk=1000` in Python ingest (`derive_composition.py`).
 - **e-Stat ingest fails with "no data"** — the env var is `ESTAT_APP_ID` (not `ESTAT_API_ID`). Monthly customs data is encoded in `cat02` codes 150–500, not the `time` dimension. Area codes are prefixed with `5` + zero-pad ("50137" → MOF "137") — `_strip_area_prefix()` in `customs.py` handles this.
+- **PAJ scrapes return 403** — paj.gr.jp blocks automated access since 2026-08. `paj` falls back to customs-derived JCC values; `paj_supply` falls back to the e-Stat 石油統計 確報 workbook (rolling 16-month window, values identical to paj-01E) and the ANRE 石油備蓄の現況 monthly PDF (a PDF published in month M reports end of M−2). Fallback rows never overwrite PAJ-sourced months. enecho.meti.go.jp soft-blocks repeated automated hits with an empty HTTP 202 — the stockpile fallback skips the fetch when the table is already current, so just re-run later if it flakes.
 - **EIA WTI futures stale** — `PET.RCLC*.D` series retired 2024-04. No replacement in v1.5; would require a paid CME data feed.
 - **Sentry "no auth token" warning at build** — expected when `SENTRY_AUTH_TOKEN` is not set. Source-map upload silently no-ops; runtime error capture still works.
 
