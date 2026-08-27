@@ -28,7 +28,7 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: "Which job to run (paj | paj_supply | customs | benchmarks | jcc_futures | derive_composition | all)"
+        description: "Which job to run (paj | paj_supply | customs | grade_imports | grade_imports_backfill | benchmarks | jcc_futures | derive_composition | all)"
         required: true
         default: "all"
 
@@ -96,7 +96,14 @@ jobs:
             customs)            run_one customs ;;
             customs_then_derive)
               run_one customs
+              run_one grade_imports
               run_one derive_composition
+              ;;
+            grade_imports)      run_one grade_imports ;;
+            grade_imports_backfill)
+              echo "::group::ingest.grade_imports --backfill"
+              python -m ingest.grade_imports --backfill
+              echo "::endgroup::"
               ;;
             benchmarks)         run_one benchmarks ;;
             jcc_futures)        run_one jcc_futures ;;
@@ -105,6 +112,7 @@ jobs:
               run_one paj
               run_one paj_supply
               run_one customs
+              run_one grade_imports
               run_one benchmarks
               run_one jcc_futures
               run_one derive_composition

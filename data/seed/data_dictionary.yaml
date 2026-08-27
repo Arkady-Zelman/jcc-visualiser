@@ -33,6 +33,21 @@ tables:
       source:          {type: text,            unit: '',          default: customs}
       ingested_at:     {type: timestamptz,     unit: UTC}
 
+  grade_imports_monthly:
+    description: MEASURED crude imports by named grade (原油油種別輸入) — the ground truth grade_hs_mapping only approximates.
+    source: e-Stat 石油統計 確報 workbook sheet 原油輸入（時系列を含む） (rolling 16 months, `ingest.grade_imports`); frozen annual DB table 0003171984 backfills 2007-01..2023-10 (`--backfill`).
+    update_cadence: Monthly, 8th of month 09:30 UTC (GitHub Actions, after `ingest.customs`).
+    columns:
+      month:           {type: date PK,         unit: first-of-month UTC}
+      oil_code:        {type: text PK,         unit: '',          notes: e-Stat 油種コード (3-digit MOF country code + 2-digit serial); 'a'+cat01 for annual-only grades}
+      oil_name:        {type: text,            unit: '',          notes: romanized grade name (ARAB-L, MURBAN); kana for annual-only grades}
+      oil_name_kana:   {type: text,            unit: '',          notes: 原油名漢字・カナ}
+      origin_country:  {type: text,            unit: ISO 3166-1 alpha-2, notes: XZ = Saudi–Kuwait neutral zone (中立地帯)}
+      is_condensate:   {type: boolean,         unit: '',          notes: condensate streams excluded from HS 2709.00.900 comparisons}
+      volume_kl:       {type: numeric(14,3),   unit: kilolitres}
+      source:          {type: text,            unit: '',          notes: estat_kakuho | estat_annual}
+      ingested_at:     {type: timestamptz,     unit: UTC}
+
   composition_monthly:
     description: Derived basket composition — month × grade × volume + share.
     source: derive_composition.py joining imports_monthly with grade_hs_mapping.

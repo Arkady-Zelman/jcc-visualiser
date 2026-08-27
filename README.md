@@ -71,6 +71,7 @@ The GitHub Actions fallback in `.github/workflows/ingest.yml` covers the same cr
 | `paj` | Monthly, 8th | paj.gr.jp Excel scrape | PAJ publishes provisional ~25 days after month end; falls back to customs-derived JCC while PAJ blocks bots |
 | `paj_supply` | Monthly, mid-month | paj.gr.jp Excel scrape | Falls back to e-Stat 石油統計 確報 workbook (crude supply) + ANRE 石油備蓄の現況 PDF (stockpiles) while PAJ blocks bots |
 | `customs` | Monthly, mid-month | e-Stat API | Japan Customs trade statistics; ~6 week lag |
+| `grade_imports` | Monthly, after `customs` | e-Stat 石油統計 確報 workbook | Measured imports by named grade (油種別); `--backfill` adds the frozen annual table 0003171984 (2007→) + archived 確報 editions |
 | `benchmarks` | Daily, 06:00 UTC | Frankfurter (FX), EIA (WTI/Brent spot) | EIA `PET.RCLC*.D` futures retired 2024-04 |
 | `derive_composition` | After `customs` | Joins `imports_monthly` + `grade_hs_mapping` | Idempotent; safe to re-run |
 | `jcc_futures` | Daily, 22:00 UTC | DEFERRED — CME blocks scraping | Stub logs the gap to `compute_runs` |
@@ -92,7 +93,8 @@ select kind, status, started_at, row_count from compute_runs order by started_at
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
 | `python -m ingest.healthcheck` | Connect to Supabase and print server version |
-| `python -m ingest.<job>` | Run an ingest job locally (`paj`, `paj_supply`, `customs`, `benchmarks`, `jcc_futures`, `derive_composition`, `seed`) |
+| `python -m ingest.<job>` | Run an ingest job locally (`paj`, `paj_supply`, `customs`, `grade_imports`, `benchmarks`, `jcc_futures`, `derive_composition`, `seed`) |
+| `python -m ingest.compare_composition` | Read-only report: measured grade composition (`grade_imports_monthly`) vs the mapping-derived one (`composition_monthly`) |
 
 ## Troubleshooting
 
