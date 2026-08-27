@@ -1,0 +1,167 @@
+# grade_oil_mapping — measured e-Stat oil-grade codes → curated grade ids.
+#
+# The e-Stat 石油統計 確報 workbook (sheet 原油輸入（時系列を含む）_1) reports
+# crude imports by NAMED GRADE (油種コード + 原油名), i.e. the measured truth that
+# grade_hs_mapping.yaml approximates with fixed per-country weights. This file maps
+# those grade codes onto the 11 curated grades in grades.yaml. Codes not listed here
+# fall into synthetic `unmapped_<origin>` buckets, same convention as
+# derive_composition (Iran stays unmapped by design so the 2018 collapse renders).
+#
+# Two code spaces:
+#   oil_code    — 確報 workbook 油種コード: 3-digit MOF country code + 2-digit serial.
+#                 Stable across workbook editions (verified 2015→2026 archive).
+#   annual_code — cat01 code in the FROZEN e-Stat DB table 0003171984
+#                 (資源・エネルギー統計年報 原油油種別輸入 月次, history 2007-01..2024-03).
+#                 The table is no longer updated, so codes are pinned here once.
+#
+# Proxy conventions intentionally mirror grade_hs_mapping.yaml so the measured and
+# mapping-based compositions stay comparable grade-by-grade:
+#   Kuwait Export Blend → arab_medium ; Qatar grades → dubai ; all US grades → wti.
+#
+# Condensate streams (kana contains コンデンセート, e.g. LOWSUL-C, DEOD-F-C) are
+# flagged is_condensate at ingest and excluded from composition comparisons —
+# customs-based imports_monthly is HS 2709.00.900 only, which excludes condensate.
+
+mappings:
+  # ---------- Saudi Arabia (SA) ----------
+  - {oil_code: '13701', annual_code: '40610', oil_name: ARAB-L,   kana: アラビアン・ライト,          origin_country: SA, grade_id: arab_light}
+  - {oil_code: '13703', annual_code: '40620', oil_name: ARAB-H,   kana: アラビアン・ヘビー,          origin_country: SA, grade_id: arab_heavy}
+  - {oil_code: '13705', annual_code: '40630', oil_name: ARAB-M,   kana: アラビアン・ミディアム,        origin_country: SA, grade_id: arab_medium}
+  - {oil_code: '13707', annual_code: '40640', oil_name: ARAB-E-L, kana: アラビアン・エキストラ・ライト,   origin_country: SA, grade_id: arab_extra_light}
+  - oil_code: '13713'
+    annual_code: '40660'
+    oil_name: ARAB-S-L
+    kana: アラビアン・スーパー・ライト
+    origin_country: SA
+    grade_id: arab_extra_light
+    notes: Arab Super Light folded into arab_extra_light — no dedicated curated grade; nearest quality bucket.
+
+  # ---------- UAE (AE) ----------
+  - {oil_code: '14701', annual_code: '41810', oil_name: MURBAN,  kana: マーバン,       origin_country: AE, grade_id: murban}
+  - {oil_code: '14724', annual_code: '41940', oil_name: DAS,     kana: ダス,         origin_country: AE, grade_id: das}
+  - {oil_code: '14713', annual_code: '41870', oil_name: U-ZAKUM, kana: アッパー・ザクム,  origin_country: AE, grade_id: upper_zakum}
+  - oil_code: '14702'
+    annual_code: '41820'
+    oil_name: U-SHAIF
+    kana: ウムシャイフ
+    origin_country: AE
+    grade_id: das
+    notes: Umm Shaif was consolidated into Das Blend (Das Island export stream) around 2014; folded for continuous history.
+  - oil_code: '14703'
+    annual_code: '41830'
+    oil_name: ZAKUM
+    kana: ザクム
+    origin_country: AE
+    grade_id: das
+    notes: Lower Zakum, likewise consolidated into Das Blend; folded for continuous history.
+  - {oil_code: '14706', oil_name: DUBAI, kana: デュバイ, origin_country: AE, grade_id: dubai}   # no annual_code — table 0003171984 has no Dubai entry (no physical cargoes 2007–2024)
+  # NOT mapped, land in unmapped_AE: MUBARRAZ (14725), UMM-LULU (14726), MUBARRAS (14704),
+  # ABKHOOSH (14708) — minor non-ADNOC / standalone streams, ~2% of AE volume in 2025–26.
+
+  # ---------- Kuwait (KW) — proxy per grade_hs_mapping convention ----------
+  - oil_code: '13801'
+    annual_code: '40810'
+    oil_name: KUWAIT
+    kana: クウェート
+    origin_country: KW
+    grade_id: arab_medium
+    notes: Kuwait Export Blend proxied via arab_medium, mirroring the KW rule in grade_hs_mapping.yaml.
+  # KWAIT-SL / クウェート・スーパー・ライト (13808 / 40850) NOT mapped — a light grade;
+  # proxying it to arab_medium would be quality-wrong. Lands in unmapped_KW.
+
+  # ---------- Qatar (QA) — proxy per grade_hs_mapping convention ----------
+  - {oil_code: '14001', annual_code: '41210', oil_name: QATAR,    kana: カタール,       origin_country: QA, grade_id: dubai}
+  - {oil_code: '14002', annual_code: '41220', oil_name: QATAR-M,  kana: カタール・マリーン, origin_country: QA, grade_id: dubai}
+  - {oil_code: '14004', annual_code: '41240', oil_name: A-SHAHEN, kana: アル・シャヒーン,  origin_country: QA, grade_id: dubai}
+
+  # ---------- Oman (OM) ----------
+  - {oil_code: '14101', annual_code: '41410', oil_name: OMAN, kana: オマーン, origin_country: OM, grade_id: oman}
+
+  # ---------- Russia (RU) — espo bucket covers ESPO + Sakhalin per grades.yaml ----------
+  - {oil_code: '22420', annual_code: '50920', oil_name: ESPO-B,   kana: エスポ・ブレンド,  origin_country: RU, grade_id: espo}
+  - {oil_code: '22411', annual_code: '50830', oil_name: SOKOL,    kana: ソコール,       origin_country: RU, grade_id: espo}
+  - {oil_code: '22421', annual_code: '50930', oil_name: SAKHAL-B, kana: サハリン・ブレンド, origin_country: RU, grade_id: espo}
+
+  # ---------- United States (US) — all US grades → wti per grade_hs_mapping convention ----------
+  - {oil_code: '30401', annual_code: '60480', oil_name: WTIM,     kana: WTIミッドランド,            origin_country: US, grade_id: wti}
+  - {oil_code: '30414', annual_code: '60510', oil_name: WTL,      kana: WTL（ウエスト・テキサス・ライト）クルード, origin_country: US, grade_id: wti}
+  - {oil_code: '30410', annual_code: '60460', oil_name: MARS,     kana: マーズ,                   origin_country: US, grade_id: wti}
+  - {oil_code: '30403', annual_code: '60430', oil_name: ANS,      kana: アラスカ・ノース・スロープ,       origin_country: US, grade_id: wti}
+  - {oil_code: '30408', annual_code: '60440', oil_name: EGL-FORD, kana: イーグル・フォード・クルード,      origin_country: US, grade_id: wti}
+  - annual_code: '60470'   # annual-only; grade retired before the 確報 workbook window
+    oil_name: WTI-DSW
+    kana: WTIードメスティック・スイート・ブレンド
+    origin_country: US
+    grade_id: wti
+
+  # Iran (IR) deliberately unmapped — annual codes 40210/40220/40260/40280 land in
+  # unmapped_IR so the 2018 sanctions collapse stays visible (same rule as grade_hs_mapping).
+  # Khafji/Hout (中立地帯 139xx / 41020) unmapped → unmapped_XZ; note customs-based
+  # imports_monthly drops the neutral zone entirely (no ISO code), so this is measured-only volume.
+
+# MOF 3-digit country prefixes missing from data/seed/mof_country_codes.yaml
+# (that file is generated from the customs country table, which lacks these).
+origin_overrides:
+  '139': XZ   # 中立地帯 — Saudi–Kuwait neutral zone (Khafji, Hout); ISO user-assigned code
+  '114': MY   # マレーシア（サラワク）— Sarawak, folded into MY like customs does for 113
+  '115': MY   # マレーシア（サバ）— Sabah
+  '532': CG   # コンゴ共和国
+
+# Country name (kana, as it appears before '_' in table 0003171984 cat01 names) → ISO.
+# Needed only for annual-table rows that fall into unmapped_<origin> buckets.
+# Names already resolvable via the 確報 workbook (国・地域名 → 国コード → ISO) are
+# included anyway so the annual ingest never depends on a workbook fetch.
+country_kana:
+  アラブ首長国連邦: AE
+  サウジアラビア: SA
+  クウェート: KW
+  アメリカ合衆国: US
+  カタール: QA
+  エクアドル: EC
+  オマーン: OM
+  中立地帯: XZ
+  オーストラリア: AU
+  ブルネイ: BN
+  南スーダン: SS
+  ベトナム: VN
+  ロシア: RU
+  インドネシア: ID
+  マレーシア: MY
+  コロンビア: CO
+  カナダ: CA
+  スーダン: SD
+  メキシコ: MX
+  アゼルバイジャン: AZ
+  バーレーン: BH
+  ノルウェー: 'NO'   # quoted — bare NO is a YAML 1.1 boolean
+  ノルウエー: 'NO'   # annual-table spelling variant (エ vs ェ)
+  カザフスタン: KZ
+  タイ: TH
+  イエメン: YE
+  ベネズエラ: VE
+  イラク: IQ
+  エジプト: EG
+  イラン: IR
+  ナイジェリア: NG
+  コンゴ共和国: CG
+  アンゴラ: AO
+  パプアニューギニア: PG
+  アルジェリア: DZ
+  アルゼンチン: AR
+  インド: IN
+  カメルーン: CM
+  ガボン: GA
+  ガーナ: GH
+  シンガポール: SG
+  スリランカ: LK
+  タンザニア: TZ
+  チャド: TD
+  フィリピン: PH
+  ブラジル: BR
+  モザンビーク: MZ
+  ヨルダン: JO
+  リビア: LY
+  中華人民共和国: CN
+  大韓民国: KR
+  英国: GB
+  赤道ギニア: GQ
